@@ -1,0 +1,4 @@
+{
+  "$comment": "Code files allowed to exceed the 600-line limit. Each entry: { path, maxLines, reason, backlog }. A listed file may shrink, never grow; remove the entry once it is back under 600. Add one only when splitting is genuinely worse, with a backlog story to split it.",
+  "files": []
+}

@@ -1,0 +1,13 @@
+# Supabase CLI configuration. We develop against a hosted "dev" project (no local Docker stack);
+# see docs/operations/supabase.md. These settings are used by `supabase link`, `supabase db push`
+# and `supabase functions deploy`.
+project_id = "mishra-computer-centre"
+
+[db]
+major_version = 17
+
+[functions.youtube-meta]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true

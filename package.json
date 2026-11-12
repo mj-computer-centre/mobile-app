@@ -1,0 +1,30 @@
+{
+  "name": "mishra-computer-centre-app",
+  "private": true,
+  "description": "Learning app for Mishra Computer Centre: courses, YouTube lessons and PDF notes, managed from an admin panel.",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @mcc/mobile start",
+    "dev:web": "pnpm --filter @mcc/mobile web",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "build:web": "pnpm --filter @mcc/mobile build:web",
+    "format": "prettier --write . --ignore-path .gitignore --ignore-path .prettierignore",
+    "format:check": "prettier --check . --ignore-path .gitignore --ignore-path .prettierignore",
+    "check:file-length": "node scripts/check-file-length.mjs",
+    "db:verify": "node scripts/verify-db.mjs",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:file-length && pnpm test && pnpm db:verify && pnpm functions:check",
+    "functions:check": "npx -y deno@2.9.6 check supabase/functions/youtube-meta/index.ts supabase/functions/delete-account/index.ts"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~58.0.4",
+    "prettier": "^3.9.10",
+    "turbo": "^2.11.0",
+    "typescript": "~6.0.3"
+  }
+}

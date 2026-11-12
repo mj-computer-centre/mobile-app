@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+apps/mobile/assets/
+apps/mobile/public/youtube-player.html
+supabase/migrations/
+supabase/tests/
+supabase/seed.sql
