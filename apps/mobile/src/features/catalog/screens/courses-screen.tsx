@@ -1,17 +1,25 @@
 import { router } from 'expo-router';
+import { View } from 'react-native';
 
 import { routes } from '@/lib/routes';
-import { AppText, EmptyState, ErrorState, LoadingState, Screen } from '@/ui';
+import { AppText, EmptyState, ErrorState, LoadingState, Screen, spacing } from '@/ui';
 
-import { CourseCard } from '../components/course-card';
+import { CourseGrid } from '../components/course-grid';
 import { useCourses } from '../hooks';
 
 export function CoursesScreen() {
   const courses = useCourses();
 
   return (
-    <Screen edges={[]} refreshing={courses.isRefetching} onRefresh={() => void courses.refetch()}>
-      <AppText variant="title">All courses</AppText>
+    <Screen
+      edges={[]}
+      width="wide"
+      refreshing={courses.isRefetching}
+      onRefresh={() => void courses.refetch()}>
+      <View style={{ gap: spacing.xs }}>
+        <AppText variant="title">All courses</AppText>
+        <AppText color="textMuted">Video lessons and PDF notes, unit by unit.</AppText>
+      </View>
       {courses.isPending ? (
         <LoadingState />
       ) : courses.isError ? (
@@ -23,13 +31,10 @@ export function CoursesScreen() {
           message="Check back soon."
         />
       ) : (
-        courses.data.map((course) => (
-          <CourseCard
-            key={course.id}
-            course={course}
-            onPress={() => router.push(routes.course(course.id))}
-          />
-        ))
+        <CourseGrid
+          courses={courses.data}
+          onOpen={(course) => router.push(routes.course(course.id))}
+        />
       )}
     </Screen>
   );

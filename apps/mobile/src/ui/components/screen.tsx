@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { MAX_CONTENT_WIDTH, spacing, useTheme } from '../theme';
+import { MAX_CONTENT_WIDTH, MAX_WIDE_CONTENT_WIDTH, spacing, useLayout, useTheme } from '../theme';
 
 export interface ScreenProps {
   children: ReactNode;
@@ -13,6 +13,11 @@ export interface ScreenProps {
   refreshing?: boolean;
   onRefresh?: () => void;
   padded?: boolean;
+  /**
+   * `narrow` (default) keeps forms and reading pages at a comfortable line length; `wide` lets
+   * card grids and dashboards use more of a desktop screen.
+   */
+  width?: 'narrow' | 'wide';
 }
 
 export function Screen({
@@ -22,9 +27,21 @@ export function Screen({
   refreshing,
   onRefresh,
   padded = true,
+  width = 'narrow',
 }: ScreenProps) {
   const { colors } = useTheme();
-  const inner = <View style={[styles.inner, padded && styles.padded]}>{children}</View>;
+  const { isWide } = useLayout();
+  const inner = (
+    <View
+      style={[
+        styles.inner,
+        { maxWidth: width === 'wide' ? MAX_WIDE_CONTENT_WIDTH : MAX_CONTENT_WIDTH },
+        padded && (isWide ? styles.paddedWide : styles.padded),
+        isWide && styles.gapWide,
+      ]}>
+      {children}
+    </View>
+  );
 
   return (
     <SafeAreaView edges={edges} style={[styles.root, { backgroundColor: colors.background }]}>
@@ -52,9 +69,10 @@ const styles = StyleSheet.create({
   inner: {
     flex: 1,
     width: '100%',
-    maxWidth: MAX_CONTENT_WIDTH,
     alignSelf: 'center',
     gap: spacing.lg,
   },
   padded: { padding: spacing.lg },
+  paddedWide: { paddingHorizontal: spacing.xxl, paddingVertical: spacing.xl + spacing.xs },
+  gapWide: { gap: spacing.xl },
 });

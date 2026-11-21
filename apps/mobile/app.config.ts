@@ -39,6 +39,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       monochromeImage: './assets/images/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: false,
+    // The app never uses the camera or microphone (the privacy policy says so, and Play checks
+    // the declared permissions against it), but libraries add them: expo-image-picker asks for
+    // both, and the template asks to draw over other apps. Remove them from the store app.
+    blockedPermissions: [
+      'android.permission.CAMERA',
+      'android.permission.RECORD_AUDIO',
+      ...(isDevelopmentBuild ? [] : ['android.permission.SYSTEM_ALERT_WINDOW']),
+    ],
   },
   web: {
     // The admin website is a single-page app: everything is behind sign-in, so there is
@@ -70,7 +78,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     '@config-plugins/react-native-pdf',
     [
       'expo-image-picker',
-      { photosPermission: 'Pick pictures for course covers and home banners.' },
+      {
+        photosPermission: 'Pick pictures for course covers and home banners.',
+        cameraPermission: false,
+        microphonePermission: false,
+      },
     ],
   ],
   experiments: {

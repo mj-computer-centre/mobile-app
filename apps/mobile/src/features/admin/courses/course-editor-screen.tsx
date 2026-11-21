@@ -1,12 +1,12 @@
 import { courseRowToForm, toAppError } from '@mcc/shared';
 import { router, Stack } from 'expo-router';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { useCourseDetail } from '@/features/catalog';
+import { CourseCover, useCourseDetail } from '@/features/catalog';
 import { confirmAction, showMessage } from '@/lib/platform/confirm';
 import { pickImage } from '@/lib/platform/picked-file';
 import { routes } from '@/lib/routes';
-import { Button, ErrorState, LoadingState, Screen, spacing, Thumbnail } from '@/ui';
+import { AppText, Button, ErrorState, LoadingState, Screen, spacing, useLayout } from '@/ui';
 
 import { AdminSection } from '../shared/admin-section';
 import { CourseDetailsForm } from './components/course-details-form';
@@ -19,6 +19,7 @@ export function CourseEditorScreen({ courseId }: { courseId: string }) {
   const update = useUpdateCourse(courseId);
   const replaceImage = useReplaceCourseImage(record.data);
   const remove = useDeleteCourse();
+  const { isWide } = useLayout();
 
   if (record.isPending || detail.isPending) return <LoadingState />;
   if (record.isError)
@@ -56,15 +57,25 @@ export function CourseEditorScreen({ courseId }: { courseId: string }) {
       <AdminSection
         title="Cover picture"
         description="Shown on the course card. A 16:9 picture works best.">
-        <View style={{ gap: spacing.md }}>
-          <Thumbnail uri={detail.data.imageUrl} fallbackIcon="image-plus" />
-          <Button
-            label={course.thumbnail_path ? 'Change picture' : 'Add picture'}
-            icon="image"
-            variant="secondary"
-            loading={replaceImage.isPending}
-            onPress={() => void changePicture()}
-          />
+        <View style={isWide ? styles.coverRow : styles.coverStack}>
+          <View style={isWide ? styles.coverWide : undefined}>
+            <CourseCover title={course.title} imageUrl={detail.data.imageUrl} rounded />
+          </View>
+          <View style={[styles.coverActions, isWide && styles.grow]}>
+            {detail.data.imageUrl ? null : (
+              <AppText variant="caption" color="textMuted">
+                No picture yet. Until you add one, students see this coloured panel with the
+                course’s short name.
+              </AppText>
+            )}
+            <Button
+              label={course.thumbnail_path ? 'Change picture' : 'Add picture'}
+              icon="image"
+              variant="secondary"
+              loading={replaceImage.isPending}
+              onPress={() => void changePicture()}
+            />
+          </View>
         </View>
       </AdminSection>
 
@@ -97,3 +108,11 @@ export function CourseEditorScreen({ courseId }: { courseId: string }) {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  coverStack: { gap: spacing.md },
+  coverRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xl },
+  coverWide: { width: 320 },
+  coverActions: { gap: spacing.md },
+  grow: { flex: 1 },
+});

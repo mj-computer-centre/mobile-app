@@ -2,6 +2,8 @@
 export { catalogKeys, useBanners, useCourseDetail, useCourseOptions, useCourses } from './hooks';
 export { COURSE_FIELDS, LESSON_FIELDS, type Banner, type CourseOption } from './api';
 export { CourseCard } from './components/course-card';
+export { CourseCover } from './components/course-cover';
+export { CourseGrid } from './components/course-grid';
 export { LessonRow } from './components/lesson-row';
 export { PriceTag } from './components/price-tag';
 export { UnitList } from './components/unit-list';

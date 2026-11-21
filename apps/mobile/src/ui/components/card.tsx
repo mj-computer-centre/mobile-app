@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { radius, spacing, useTheme } from '../theme';
+import { radius, shadows, spacing, useTheme } from '../theme';
 
 export interface CardProps {
   children: ReactNode;
@@ -12,11 +12,13 @@ export interface CardProps {
 }
 
 export function Card({ children, onPress, accessibilityLabel, padded = true, style }: CardProps) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
   const cardStyle = [
     styles.card,
     padded && styles.padded,
     { backgroundColor: colors.surface, borderColor: colors.border },
+    // Shadows read as dirt on a dark background; the border carries the edge there.
+    !dark && shadows.card,
     style,
   ];
 

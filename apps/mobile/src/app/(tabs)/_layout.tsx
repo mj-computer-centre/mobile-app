@@ -1,7 +1,8 @@
 import { Tabs } from 'expo-router/js-tabs';
 
+import { SideNav } from '@/app-shell/side-nav';
 import { useStaffRole } from '@/features/auth';
-import { Icon, type IconName } from '@/ui';
+import { Icon, useLayout, type IconName } from '@/ui';
 
 function TabIcon({ name, focused }: { name: IconName; focused: boolean }) {
   return <Icon name={name} color={focused ? 'primary' : 'textMuted'} />;
@@ -9,9 +10,18 @@ function TabIcon({ name, focused }: { name: IconName; focused: boolean }) {
 
 export default function TabsLayout() {
   const role = useStaffRole();
+  // Wide screens get a left sidebar instead of the phone's bottom bar. Each page already starts
+  // with its own big title, so the small header above it is dropped there too.
+  const { isWide } = useLayout();
 
   return (
-    <Tabs screenOptions={{ headerTitleAlign: 'left' }}>
+    <Tabs
+      tabBar={isWide ? (props) => <SideNav {...props} /> : undefined}
+      screenOptions={{
+        headerTitleAlign: 'left',
+        tabBarPosition: isWide ? 'left' : 'bottom',
+        headerShown: !isWide,
+      }}>
       <Tabs.Screen
         name="index"
         options={{
