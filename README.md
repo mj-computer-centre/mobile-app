@@ -48,4 +48,5 @@ Set `EXPO_PUBLIC_DEV_AUTH_BYPASS` in `apps/mobile/.env.local` to `student`, `adm
 ## Before the first release
 
 The owner's accounts are needed for: the Supabase project, Google Cloud OAuth clients and the YouTube API key, the Expo account, and the Play Console. See [docs/QUESTIONS.md](docs/QUESTIONS.md) and the `OPS-*` stories in [docs/BACKLOG.md](docs/BACKLOG.md).
+
 # mobile-app
