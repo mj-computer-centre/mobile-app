@@ -6,7 +6,7 @@ const isDevelopmentBuild = process.env.APP_VARIANT === 'development';
 
 // TODO(OPS-03): replace with the package name the owner chooses before the first Play upload.
 // It can never change once the app is published.
-const ANDROID_PACKAGE = 'in.mishracomputercentre.app';
+const ANDROID_PACKAGE = 'in.mjcccomputercentre.app';
 
 // The dev auth bypass (src/lib/dev-bypass.ts) is ignored outside development bundles anyway;
 // this makes a release build with it configured fail loudly instead of shipping the setting.
@@ -89,6 +89,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     reactCompiler: true,
   },
   extra: {
-    eas: { projectId: process.env.EAS_PROJECT_ID || undefined },
+    eas: { projectId: process.env.EAS_PROJECT_ID || "3cf62934-c973-4a1e-a41b-67e717b8364b" },
   },
 });
