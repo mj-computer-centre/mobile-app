@@ -17,8 +17,9 @@
     "format:check": "prettier --check . --ignore-path .gitignore --ignore-path .prettierignore",
     "check:file-length": "node scripts/check-file-length.mjs",
     "db:verify": "node scripts/verify-db.mjs",
+    "images:verify": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-image-keys.mjs",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:file-length && pnpm test && pnpm db:verify && pnpm functions:check",
-    "functions:check": "npx -y deno@2.9.6 check supabase/functions/youtube-meta/index.ts supabase/functions/delete-account/index.ts"
+    "functions:check": "npx -y deno@2.9.6 check supabase/functions/youtube-meta/index.ts supabase/functions/delete-account/index.ts supabase/functions/course-image/index.ts supabase/functions/upload-image/index.ts supabase/functions/remove-images/index.ts"
   },
   "devDependencies": {
     "eslint": "^9.39.5",

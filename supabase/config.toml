@@ -11,3 +11,12 @@ verify_jwt = true
 
 [functions.delete-account]
 verify_jwt = true
+
+[functions.course-image]
+verify_jwt = true
+
+[functions.upload-image]
+verify_jwt = true
+
+[functions.remove-images]
+verify_jwt = true
