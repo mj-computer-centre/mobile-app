@@ -3,6 +3,7 @@
  * repositories pass in the rows they fetched and a function that builds public file URLs.
  */
 import type { TableRow } from '../db';
+import { IMAGE_WIDTHS } from '../images/image-url';
 import { byPosition, unitLabel } from './units';
 import type { CourseDetail, CourseSummary, Lesson, PdfLesson, Unit } from './types';
 import { youtubeThumbnailUrl } from '../youtube/thumbnail';
@@ -48,7 +49,11 @@ export interface CourseTreeRow extends CourseRow {
 }
 
 export interface UrlBuilders {
-  mediaUrl: (path: string) => string;
+  /**
+   * The URL to show a course cover or banner at. `stored` is what the row holds: a Cloudinary
+   * URL, or a path in the media bucket for pictures from before Cloudinary.
+   */
+  mediaUrl: (stored: string, width: number) => string;
   notesUrl: (path: string) => string;
 }
 
@@ -60,7 +65,7 @@ export function toCourseSummary(
     id: row.id,
     title: row.title,
     shortDescription: row.short_description,
-    imageUrl: row.thumbnail_path ? urls.mediaUrl(row.thumbnail_path) : null,
+    imageUrl: row.thumbnail_path ? urls.mediaUrl(row.thumbnail_path, IMAGE_WIDTHS.cover) : null,
     durationText: row.duration_text,
     originalPricePaise: row.original_price_paise,
     pricePaise: row.price_paise,

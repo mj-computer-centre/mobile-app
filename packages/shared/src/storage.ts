@@ -1,4 +1,8 @@
-/** Storage buckets created in supabase/migrations/20261024000700_storage.sql. */
+/**
+ * Storage buckets created in supabase/migrations/20261024000700_storage.sql. `notes` holds the
+ * PDFs. `media` held course pictures and banners before they moved to Cloudinary (see
+ * images/image-url.ts); it is still read for the pictures uploaded back then.
+ */
 export const BUCKETS = {
   notes: 'notes',
   media: 'media',
@@ -20,14 +24,6 @@ export function publicStorageUrl(supabaseUrl: string, bucket: Bucket, path: stri
 
 export function notesPath(lessonId: string): string {
   return `${lessonId}.pdf`;
-}
-
-export function courseImagePath(courseId: string, fileName: string): string {
-  return `courses/${courseId}/${fileName}`;
-}
-
-export function bannerImagePath(fileName: string): string {
-  return `banners/${fileName}`;
 }
 
 /** "1.5 MB", "820 KB" — for showing PDF sizes. */

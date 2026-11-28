@@ -91,12 +91,14 @@ describe('settings form', () => {
       youtubeUrl: '',
       facebookUrl: '',
       instagramUrl: '',
+      playStoreUrl: ' https://play.google.com/store/apps/details?id=in.example.app ',
     };
     expect(settingsFormSchema.safeParse(values).success).toBe(true);
     expect(settingsFormToRow(values)).toMatchObject({
       phone: '9876543210',
       whatsapp: null,
       email: null,
+      play_store_url: 'https://play.google.com/store/apps/details?id=in.example.app',
     });
   });
 
@@ -112,6 +114,7 @@ describe('settings form', () => {
       youtubeUrl: '',
       facebookUrl: '',
       instagramUrl: '',
+      playStoreUrl: '',
     });
     expect(result.success).toBe(false);
   });

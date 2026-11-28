@@ -33,6 +33,7 @@ export const settingsFormSchema = z.object({
   youtubeUrl: optionalLink,
   facebookUrl: optionalLink,
   instagramUrl: optionalLink,
+  playStoreUrl: optionalLink,
 });
 
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
@@ -53,6 +54,7 @@ export function settingsFormToRow(values: SettingsFormValues): TableUpdate<'app_
     youtube_url: orNull(values.youtubeUrl),
     facebook_url: orNull(values.facebookUrl),
     instagram_url: orNull(values.instagramUrl),
+    play_store_url: orNull(values.playStoreUrl),
   };
 }
 
@@ -68,5 +70,6 @@ export function settingsRowToForm(row: SettingsRow): SettingsFormValues {
     youtubeUrl: row.youtube_url ?? '',
     facebookUrl: row.facebook_url ?? '',
     instagramUrl: row.instagram_url ?? '',
+    playStoreUrl: row.play_store_url ?? '',
   };
 }

@@ -1,7 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": []
+    "types": [],
+    // The tests import the edge functions' plain TypeScript (supabase/functions/_shared), whose
+    // own imports end in ".ts" as Deno requires.
+    "allowImportingTsExtensions": true
   },
   "include": ["src", "vitest.config.ts"]
 }
