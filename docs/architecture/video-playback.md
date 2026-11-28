@@ -4,7 +4,7 @@ The owner's firmest requirement: a video must play inside the app and **no tap m
 
 ## How playback works
 
-`features/player/lesson-player.tsx` renders `react-native-youtube-iframe`, which loads a small player page in a WebView; that page embeds YouTube's iframe player. The player page is ours (`apps/mobile/public/youtube-player.html`, from the library, MIT) and is served by the admin website, set with `EXPO_PUBLIC_PLAYER_PAGE_URL`. Until the website is deployed, the library's GitHub Pages copy is used.
+`features/player/lesson-player.tsx` renders `react-native-youtube-iframe`, which loads a small player page in a WebView; that page embeds YouTube's iframe player. The player page is ours (`apps/mobile/public/youtube-player.html`, from the library, MIT) and is served by the website, set with `EXPO_PUBLIC_PLAYER_PAGE_URL`. Until the website is deployed, the library's GitHub Pages copy is used.
 
 ## Exits and how each is closed
 
@@ -27,7 +27,7 @@ The policy is pure TypeScript with unit tests (`packages/shared/src/player/navig
 - YouTube's terms discourage blocking parts of the player; the owner accepted this small risk (plan, "Things to know").
 - YouTube may show ads; the app cannot remove them.
 - An Unlisted video can still be watched on YouTube by anyone who has its link. Paid courses will move to private hosting (PAY-02).
-- On the **web** admin, browsers do not let a page stop links inside a cross-origin iframe; the guarantee is for the Android app.
+- On the **website**, browsers do not let a page stop links inside a cross-origin iframe; the guarantee is for the Android app.
 - Videos with "Allow embedding" switched off, or set to Private, cannot play. The admin panel flags them when they are added (`playbackProblem`).
 
 ## Manual check on a real phone (every release)

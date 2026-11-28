@@ -165,18 +165,39 @@ Dates will be fixed once your course list, videos and accounts are ready.
 - **Free plan limits:** about 5 GB of PDF downloads a month. PDFs are saved on the phone after the first open, which keeps usage low.
 - **Play Store rules:** a privacy policy, a Data safety form and an account deletion option are required. All three are part of the plan.
 
+## 11. Update, 28 November 2026
+
+Four things were added after this plan was agreed. Nothing above was taken away.
+
+**A website anyone can open.** The website used to show only a sign-in screen. It now has public pages: a home page with your courses, the outline of each course, a Tests page, your contact details, the privacy policy and a page that explains how to delete an account. Google Play asks for the last two; their addresses are `https://<your website>/privacy` and `https://<your website>/delete-account`. Students can also sign in on the website and use it exactly like the app. Videos and notes still need sign-in.
+
+**Tests.** In Admin → Tests you create a test: its name, when it opens and closes, how many minutes students get, and the questions (typed one by one, or pasted from Word or WhatsApp in one go). Students take it in the new Tests tab.
+
+- A student can start any time between the opening and closing time. They get the minutes you set, or until the closing time if that comes first.
+- Each student takes a test once. They see their score at once.
+- After the test closes, students see their rank and, if you allow it, the correct answer to every question.
+- If someone missed the test, switch on "Let students who missed it take it later". Their attempt is marked as taken late. You can switch this on after the test is over.
+- You see everyone's score, can download the list for Excel, can open one student's answers, and can let one student take the test again.
+
+**A new look.** The app and the website were redesigned around one idea: students come to you to learn the keyboard, so buttons look and press like keys. The colours are ink blue and marigold yellow and the app icon is an "M" key. All of this changes easily when you give us your own logo and colours.
+
+**Pictures for courses.** When you add a course you can now give it a cover picture on the same page, and change or remove it later. There are two ways: upload a photo from your phone, or press **Make one with AI**, which draws four pictures for the course in about ten seconds; you choose one. The AI pictures only suggest the subject (a ledger and a calculator for Tally, a keyboard for typing); a real photo of your classroom is still better. Pictures are kept on your Cloudinary account, which sends students a small, fast-loading copy. Both services are free at your size.
+
+What we still need from you is unchanged (section 8), plus: read the new privacy policy, and after the app is on the Play Store paste its link in Admin → Centre details so the website can show a "Get the Android app" button.
+
 ## Appendix: technical details (for the developer)
 
-| Part           | Choice                                                                                                                                                       |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| App            | React Native with Expo (TypeScript, Expo Router, development builds)                                                                                         |
-| Video          | `react-native-youtube-iframe`; all navigation out of the player blocked; own "next lesson" screen at the end; fullscreen and landscape                       |
-| PDF            | `react-native-pdf`, cached with `expo-file-system`                                                                                                           |
-| Login          | `@react-native-google-signin/google-signin` with Supabase Auth (`signInWithIdToken`); Supabase OAuth on the web                                              |
-| Backend        | Supabase: Postgres with row-level security, Storage bucket `notes`, Edge Functions                                                                           |
-| Edge Functions | `youtube-meta`: title, thumbnail, duration, playlist import, embeddable and privacy check via YouTube Data API v3, key stored as a secret. `delete-account`. |
-| Admin website  | Same Expo code exported for web, hosted on EAS Hosting or Cloudflare Pages under the owner's account                                                         |
-| Push (later)   | `expo-notifications`                                                                                                                                         |
+| Part           | Choice                                                                                                                                                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App            | React Native with Expo (TypeScript, Expo Router, development builds)                                                                                                                                                       |
+| Video          | `react-native-youtube-iframe`; all navigation out of the player blocked; own "next lesson" screen at the end; fullscreen and landscape                                                                                     |
+| PDF            | `react-native-pdf`, cached with `expo-file-system`                                                                                                                                                                         |
+| Login          | `@react-native-google-signin/google-signin` with Supabase Auth (`signInWithIdToken`); Supabase OAuth on the web                                                                                                            |
+| Backend        | Supabase: Postgres with row-level security, Storage bucket `notes`, Edge Functions                                                                                                                                         |
+| Pictures       | Cloudinary for course covers and banners; Cloudflare Workers AI (FLUX.1 schnell) for AI covers. Keys are function secrets                                                                                                  |
+| Edge Functions | `youtube-meta`: title, thumbnail, duration, playlist import, embeddable and privacy check via YouTube Data API v3, key stored as a secret. `delete-account`. `upload-image`, `remove-images`, `course-image` for pictures. |
+| Website        | Same Expo code exported for web (public pages, student app, admin panel), hosted as a static site under the owner's account                                                                                                |
+| Push (later)   | `expo-notifications`                                                                                                                                                                                                       |
 
 **Database**
 
@@ -192,12 +213,19 @@ lessons          id, type (video | pdf), title, youtube_video_id, thumbnail_url,
                  duration_seconds, pdf_path, notes_pdf_id   -- reusable
 section_lessons  section_id, lesson_id, sort_order
 banners          id, image_url, course_id, sort_order, is_active
-app_settings     phone, whatsapp, address, map_link, timings, social_links
+app_settings     phone, whatsapp, address, map_link, timings, social_links, play_store_url
+tests            id, title, description, course_id, duration_minutes, starts_at, ends_at,
+                 allow_late, show_review, pass_percent, is_published
+test_questions   id, test_id, position, prompt, options[], marks
+test_answer_keys question_id, correct_option, explanation   -- staff only
+test_attempts    id, test_id, user_id, started_at, deadline_at, submitted_at, is_late
+test_answers     attempt_id, question_id, selected_option
 ```
 
 **Access rules**
 
-- Signed-in users can read content; only staff can write.
+- Signed-in users can read content; only staff can write. Visitors who have not signed in can read course names and outlines, nothing that plays.
+- Tests are timed and marked in the database. Students never read the answer key from a table.
 - Users can read and update only their own profile.
 - Roles live in `staff`, not in `profiles`, so a student cannot promote themselves.
 - Storage bucket `notes`: public read, staff-only upload. Switch to signed URLs when paid courses start.
