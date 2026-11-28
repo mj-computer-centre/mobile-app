@@ -104,20 +104,20 @@ How tests behave: [architecture/tests.md](architecture/tests.md).
 
 ## Operations (OPS) — needs the owner
 
-| ID     | Story                                                                                                                                                                                   | Status  |
-| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| OPS-01 | Create the Supabase dev and production projects; push migrations; deploy functions; set secrets                                                                                         | blocked |
-| OPS-02 | Google Cloud: OAuth consent screen, Web/Android client ids, YouTube Data API key                                                                                                        | blocked |
-| OPS-03 | Confirm the Android package name (permanent once published): `app.config.ts` and `.env.example` disagree                                                                                | blocked |
-| OPS-04 | Play Console account, store listing, Data safety form, privacy policy and account-deletion URLs                                                                                         | blocked |
-| OPS-05 | Deploy the website; set `EXPO_PUBLIC_PLAYER_PAGE_URL`; add its address to Supabase redirect URLs                                                                                        | todo    |
-| OPS-06 | Owner reads the privacy policy text (rewritten 28 Nov 2026 to cover tests and the website)                                                                                              | blocked |
-| OPS-07 | The centre's own logo and colours, if it wants them instead of the M key                                                                                                                | blocked |
-| OPS-08 | Closed testing with 12+ testers for 14 days, then production                                                                                                                            | blocked |
-| OPS-09 | Add the Play App Signing SHA-1 to the Android OAuth client after the first upload                                                                                                       | todo    |
-| OPS-10 | Push the five `20261128…` migrations (tests, public website, AI picture limit) to each Supabase project; regenerate types                                                               | todo    |
-| OPS-12 | Set the Cloudinary and Cloudflare secrets on each Supabase project and deploy `course-image`, `upload-image`, `remove-images` ([supabase.md](operations/supabase.md), sections 4 and 5) | todo    |
-| OPS-11 | After publishing, paste the Play Store link in Admin → Centre details                                                                                                                   | todo    |
+| ID     | Story                                                                                                                                                                                                               | Status  |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| OPS-01 | Create the Supabase dev and production projects; push migrations; deploy functions; set secrets                                                                                                                     | blocked |
+| OPS-02 | Google Cloud: OAuth consent screen, Web/Android client ids, YouTube Data API key                                                                                                                                    | blocked |
+| OPS-03 | Confirm the Android package name (permanent once published): `app.config.ts` and `.env.example` disagree                                                                                                            | blocked |
+| OPS-04 | Play Console account, store listing, Data safety form, privacy policy and account-deletion URLs                                                                                                                     | blocked |
+| OPS-05 | Deploy the website; set `EXPO_PUBLIC_PLAYER_PAGE_URL`; add its address to Supabase redirect URLs                                                                                                                    | todo    |
+| OPS-06 | Owner reads the privacy policy text (rewritten 28 Nov 2026 to cover tests and the website)                                                                                                                          | blocked |
+| OPS-07 | The centre's own logo and colours, if it wants them instead of the M key                                                                                                                                            | blocked |
+| OPS-08 | Closed testing with 12+ testers for 14 days, then production                                                                                                                                                        | blocked |
+| OPS-09 | Add the Play App Signing SHA-1 to the Android OAuth client after the first upload                                                                                                                                   | todo    |
+| OPS-10 | Push the five `20261128…` migrations (tests, public website, AI picture limit) to the production Supabase project; regenerate types (done 28 Nov 2026; a separate dev project still needs them when it exists)      | done    |
+| OPS-12 | Set the Cloudinary and Cloudflare secrets on the production Supabase project and deploy `course-image`, `upload-image`, `remove-images` (done 28 Nov 2026; [supabase.md](operations/supabase.md), sections 4 and 5) | done    |
+| OPS-11 | After publishing, paste the Play Store link in Admin → Centre details                                                                                                                                               | todo    |
 
 ## Testing (TST)
 

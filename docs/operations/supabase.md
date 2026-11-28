@@ -6,28 +6,40 @@ Everything is created on the **centre's Gmail account**; the developer is invite
 
 1. Create the project (region: Mumbai). Note the project ref, URL and publishable key (Project settings → API).
 2. Link and push the schema:
+
    ```bash
    pnpm dlx supabase login
    pnpm dlx supabase link --project-ref <ref>
-   pnpm dlx supabase db push            # applies supabase/migrations
+   pnpm dlx supabase db push --remote   # applies supabase/migrations to the linked project
    ```
+
+   The CLI works on a local Docker stack unless told otherwise, and this project has none: every database command needs `--remote`. Add `--yes` when running without a terminal.
+
 3. Dev project only: run `supabase/seed.sql` in the SQL editor for demo courses.
 4. Regenerate types and commit them:
+
    ```bash
-   pnpm dlx supabase gen types typescript --project-id <ref> --schema public > packages/shared/src/db/generated/database.types.ts
+   pnpm dlx supabase gen types --remote --lang typescript --schema public > packages/shared/src/db/generated/database.types.ts
+   pnpm format                          # the generator's output is not in the repo's style
    ```
+
+   Keep the comment at the top of that file.
 
 ### After pulling new migrations
 
 Whenever `supabase/migrations` gains files (28 Nov 2026 added five: tests, their access rules, their admin functions, the public website, and the daily limit for AI pictures), each project needs them before the matching app or website is released:
 
 ```bash
-pnpm db:verify                       # applies everything to a throwaway local Postgres and runs the tests
+pnpm db:verify                                  # applies everything to a throwaway local Postgres and runs the tests
 pnpm dlx supabase link --project-ref <ref>
-pnpm dlx supabase db push            # dev first, then production
-pnpm dlx supabase gen types typescript --project-id <ref> --schema public > packages/shared/src/db/generated/database.types.ts
-pnpm typecheck                       # the generated types must still fit the app
+pnpm dlx supabase migration list --remote       # what the project has, and what is waiting
+pnpm dlx supabase db push --remote --dry-run    # names the migrations it would apply
+pnpm dlx supabase db push --remote              # dev first, then production
+pnpm dlx supabase gen types --remote --lang typescript --schema public > packages/shared/src/db/generated/database.types.ts
+pnpm format && pnpm typecheck                   # the generated types must still fit the app
 ```
+
+Push the database **before** the website that needs it goes out. Migrations only add things, so the site that is live keeps working; the new site without them shows errors. The production project got these five, the picture secrets and all five functions on 28 Nov 2026.
 
 The `20261128000400_public_site` migration lets visitors who have not signed in read **published course names, descriptions, prices and outlines** (unit and lesson titles) and the names and times of tests. It gives them nothing that plays. Read it before pushing if the centre would rather keep any of that private.
 
