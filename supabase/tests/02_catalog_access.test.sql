@@ -78,8 +78,11 @@ select tests.check_raises(
 select tests.act_as_anon();
 select tests.check_equal((select count(*) from public.app_settings), 1::bigint,
   'contact details are readable before sign-in');
-select tests.check_raises($$select count(*) from public.courses$$, 'permission denied',
-  'courses are not readable before sign-in');
+-- The public website lists courses (supabase/tests/07_public_site.test.sql has the detail).
+select tests.check_equal((select count(*) from public.courses), 1::bigint,
+  'published courses are readable before sign-in, drafts are not');
+select tests.check_raises($$select count(*) from public.lessons$$, 'permission denied',
+  'lessons are not readable before sign-in');
 
 -- Staff ----------------------------------------------------------------------------------------
 select tests.act_as(:'owner_id');
