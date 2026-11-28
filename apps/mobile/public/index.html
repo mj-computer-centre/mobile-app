@@ -1,8 +1,11 @@
 <!doctype html>
 <!--
   The page every address of the website starts from (the site is a single-page app; see
-  docs/architecture/overview.md). Expo fills in %LANG_ISO_CODE% and %WEB_TITLE% and adds the
+  docs/architecture/overview.md). Expo fills in the language and the title below, and adds the
   description, theme colour, favicon and scripts from app.config.ts.
+
+  Expo replaces only the FIRST copy of each of its two placeholders in this file, so they must
+  not be written anywhere above the two places they are used, this comment included.
 -->
 <html lang="%LANG_ISO_CODE%">
   <head>
