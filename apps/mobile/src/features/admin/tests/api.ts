@@ -104,7 +104,8 @@ export async function saveQuestion(
   return run(
     supabase().rpc('save_test_question', {
       p_test_id: testId,
-      p_question_id: questionId,
+      // The generated types make every argument not null; null here means "a new question".
+      p_question_id: questionId as string,
       ...questionFormToArgs(values),
     }),
   );

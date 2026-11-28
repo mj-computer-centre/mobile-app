@@ -1,15 +1,18 @@
-// Database types in the format produced by `supabase gen types typescript`.
-// Regenerate after every migration:
-//   pnpm dlx supabase gen types typescript --project-id <id> --schema public > packages/shared/src/db/generated/database.types.ts
+// Database types generated from the linked Supabase project (last on 28 Nov 2026).
+// Regenerate after every migration is pushed, then run prettier on the file:
+//   pnpm dlx supabase gen types --remote --lang typescript --schema public > packages/shared/src/db/generated/database.types.ts
 // When that is not possible (no access to the project) update it by hand: it must match
-// supabase/migrations exactly. Columns of functions that return a table are typed as not null
-// here, as the generator does; mappers in src treat the ones that can be null as nullable.
+// supabase/migrations exactly. The generator types the columns of functions that return a table,
+// and every function argument, as not null; mappers in src treat the ones that can be null as
+// nullable, and a call that passes null for an argument says so where it does.
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '13';
+    PostgrestVersion: '14.18';
   };
   public: {
     Tables: {
@@ -142,15 +145,15 @@ export type Database = {
             foreignKeyName: 'course_sections_section_id_fkey';
             columns: ['section_id'];
             isOneToOne: false;
-            referencedRelation: 'sections';
-            referencedColumns: ['id'];
+            referencedRelation: 'section_usage';
+            referencedColumns: ['section_id'];
           },
           {
             foreignKeyName: 'course_sections_section_id_fkey';
             columns: ['section_id'];
             isOneToOne: false;
-            referencedRelation: 'section_usage';
-            referencedColumns: ['section_id'];
+            referencedRelation: 'sections';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -247,6 +250,13 @@ export type Database = {
             foreignKeyName: 'lessons_notes_lesson_id_fkey';
             columns: ['notes_lesson_id'];
             isOneToOne: false;
+            referencedRelation: 'lesson_usage';
+            referencedColumns: ['lesson_id'];
+          },
+          {
+            foreignKeyName: 'lessons_notes_lesson_id_fkey';
+            columns: ['notes_lesson_id'];
+            isOneToOne: false;
             referencedRelation: 'lessons';
             referencedColumns: ['id'];
           },
@@ -317,21 +327,14 @@ export type Database = {
             foreignKeyName: 'section_lessons_lesson_id_fkey';
             columns: ['lesson_id'];
             isOneToOne: false;
-            referencedRelation: 'lessons';
-            referencedColumns: ['id'];
+            referencedRelation: 'lesson_usage';
+            referencedColumns: ['lesson_id'];
           },
           {
             foreignKeyName: 'section_lessons_lesson_id_fkey';
             columns: ['lesson_id'];
             isOneToOne: false;
-            referencedRelation: 'lesson_usage';
-            referencedColumns: ['lesson_id'];
-          },
-          {
-            foreignKeyName: 'section_lessons_section_id_fkey';
-            columns: ['section_id'];
-            isOneToOne: false;
-            referencedRelation: 'sections';
+            referencedRelation: 'lessons';
             referencedColumns: ['id'];
           },
           {
@@ -340,6 +343,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'section_usage';
             referencedColumns: ['section_id'];
+          },
+          {
+            foreignKeyName: 'section_lessons_section_id_fkey';
+            columns: ['section_id'];
+            isOneToOne: false;
+            referencedRelation: 'sections';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -483,15 +493,15 @@ export type Database = {
             foreignKeyName: 'test_attempts_test_id_fkey';
             columns: ['test_id'];
             isOneToOne: false;
-            referencedRelation: 'tests';
-            referencedColumns: ['id'];
+            referencedRelation: 'test_usage';
+            referencedColumns: ['test_id'];
           },
           {
             foreignKeyName: 'test_attempts_test_id_fkey';
             columns: ['test_id'];
             isOneToOne: false;
-            referencedRelation: 'test_usage';
-            referencedColumns: ['test_id'];
+            referencedRelation: 'tests';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -531,15 +541,15 @@ export type Database = {
             foreignKeyName: 'test_questions_test_id_fkey';
             columns: ['test_id'];
             isOneToOne: false;
-            referencedRelation: 'tests';
-            referencedColumns: ['id'];
+            referencedRelation: 'test_usage';
+            referencedColumns: ['test_id'];
           },
           {
             foreignKeyName: 'test_questions_test_id_fkey';
             columns: ['test_id'];
             isOneToOne: false;
-            referencedRelation: 'test_usage';
-            referencedColumns: ['test_id'];
+            referencedRelation: 'tests';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -641,7 +651,15 @@ export type Database = {
           phone: string | null;
           profile_completed_at: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'profiles_interested_course_id_fkey';
+            columns: ['interested_course_id'];
+            isOneToOne: false;
+            referencedRelation: 'courses';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       test_usage: {
         Row: {
@@ -650,17 +668,38 @@ export type Database = {
           test_id: string | null;
           total_marks: number | null;
         };
+        Insert: {
+          attempt_count?: never;
+          question_count?: never;
+          test_id?: string | null;
+          total_marks?: never;
+        };
+        Update: {
+          attempt_count?: never;
+          question_count?: never;
+          test_id?: string | null;
+          total_marks?: never;
+        };
         Relationships: [];
       };
     };
     Functions: {
       add_staff_by_email: {
-        Args: { p_email: string; p_role: Database['public']['Enums']['staff_role'] };
+        Args: {
+          p_email: string;
+          p_role: Database['public']['Enums']['staff_role'];
+        };
         Returns: {
           added_by: string | null;
           created_at: string;
           role: Database['public']['Enums']['staff_role'];
           user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'staff';
+          isOneToOne: true;
+          isSetofReturn: false;
         };
       };
       admin_dashboard_stats: {
@@ -763,10 +802,7 @@ export type Database = {
           title: string;
         }[];
       };
-      remove_staff: {
-        Args: { p_user_id: string };
-        Returns: undefined;
-      };
+      remove_staff: { Args: { p_user_id: string }; Returns: undefined };
       reorder_course_sections: {
         Args: { p_course_id: string; p_section_ids: string[] };
         Returns: undefined;
@@ -790,7 +826,7 @@ export type Database = {
           p_marks?: number;
           p_options: string[];
           p_prompt: string;
-          p_question_id: string | null;
+          p_question_id: string;
           p_test_id: string;
         };
         Returns: string;
@@ -806,6 +842,12 @@ export type Database = {
           test_id: string;
           user_id: string;
         };
+        SetofOptions: {
+          from: '*';
+          to: 'test_attempts';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       submit_test: {
         Args: { p_answers?: Json; p_attempt_id: string };
@@ -817,6 +859,12 @@ export type Database = {
           submitted_at: string | null;
           test_id: string;
           user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'test_attempts';
+          isOneToOne: true;
+          isSetofReturn: false;
         };
       };
       test_attempt_review: {
@@ -874,10 +922,7 @@ export type Database = {
           user_id: string;
         }[];
       };
-      use_ai_image_allowance: {
-        Args: never;
-        Returns: number;
-      };
+      use_ai_image_allowance: { Args: never; Returns: number };
     };
     Enums: {
       lesson_kind: 'video' | 'pdf';
@@ -888,3 +933,123 @@ export type Database = {
     };
   };
 };
+
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>];
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+      Row: infer R;
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+      Insert: infer I;
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+      Update: infer U;
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    keyof DefaultSchema['Enums'] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+    : never;
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    keyof DefaultSchema['CompositeTypes'] | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+    : never;
+
+export const Constants = {
+  public: {
+    Enums: {
+      lesson_kind: ['video', 'pdf'],
+      staff_role: ['owner', 'admin'],
+    },
+  },
+} as const;
