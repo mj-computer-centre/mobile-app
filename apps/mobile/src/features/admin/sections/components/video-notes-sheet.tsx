@@ -1,12 +1,11 @@
-import { toAppError, type VideoLesson } from '@mcc/shared';
+import type { VideoLesson } from '@mcc/shared';
 import { useState } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { pickPdf } from '@/lib/platform/picked-file';
-import { AppText, Button, spacing, useTheme } from '@/ui';
+import { Button, Notice, Sheet } from '@/ui';
 
 import { useCreatePdfLesson, useLibraryLessons } from '../../lessons/hooks';
+import { ErrorNotice } from '../../shared/error-notice';
 import { PickFromListModal } from '../../shared/pick-from-list-modal';
 import { useSectionLessons } from '../hooks';
 
@@ -18,7 +17,6 @@ export interface VideoNotesSheetProps {
 
 /** Topic-wise notes for one video: upload a new PDF, reuse one from the library, or remove it. */
 export function VideoNotesSheet({ sectionId, video, onClose }: VideoNotesSheetProps) {
-  const { colors } = useTheme();
   const { setNotes } = useSectionLessons(sectionId);
   const create = useCreatePdfLesson();
   const library = useLibraryLessons();
@@ -40,56 +38,48 @@ export function VideoNotesSheet({ sectionId, video, onClose }: VideoNotesSheetPr
     .map((lesson) => ({ id: lesson.id, title: lesson.title }));
 
   return (
-    <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
-        <View style={styles.body}>
-          <AppText variant="heading">Notes for this video</AppText>
-          <AppText color="textMuted">{video.title}</AppText>
-          {video.notes ? <AppText>Attached now: {video.notes.title}</AppText> : null}
-
-          <Button
-            label="Upload a new PDF"
-            icon="upload"
-            loading={create.isPending}
-            onPress={() => void uploadNew().catch(() => undefined)}
-          />
-          <Button
-            label="Choose a PDF from the library"
-            icon="bookshelf"
-            variant="secondary"
-            onPress={() => setChoosing(true)}
-          />
-          {video.notes ? (
-            <Button
-              label="Remove notes from this video"
-              icon="close"
-              variant="danger"
-              loading={setNotes.isPending}
-              onPress={() =>
-                setNotes.mutate({ videoId: video.id, notesId: null }, { onSuccess: onClose })
-              }
-            />
-          ) : null}
-          {error ? <AppText color="danger">{toAppError(error).message}</AppText> : null}
-          <Button label="Close" variant="ghost" onPress={onClose} />
-        </View>
-
-        <PickFromListModal
-          visible={choosing}
-          title="Choose notes PDF"
-          items={pdfs}
-          emptyMessage="No PDFs in the library yet."
-          onPick={(notesId) =>
-            setNotes.mutate({ videoId: video.id, notesId }, { onSuccess: onClose })
+    <Sheet visible onClose={onClose} title="Notes for this video" description={video.title}>
+      {video.notes ? (
+        <Notice tone="primary" icon="paperclip">
+          {`Attached now: ${video.notes.title}`}
+        </Notice>
+      ) : null}
+      <Button
+        label="Upload a new PDF"
+        icon="upload"
+        loading={create.isPending}
+        onPress={() => void uploadNew().catch(() => undefined)}
+      />
+      <Button
+        label="Choose a PDF from the library"
+        icon="bookshelf"
+        variant="secondary"
+        onPress={() => setChoosing(true)}
+      />
+      {video.notes ? (
+        <Button
+          label="Remove notes from this video"
+          icon="close"
+          variant="danger"
+          loading={setNotes.isPending}
+          onPress={() =>
+            setNotes.mutate({ videoId: video.id, notesId: null }, { onSuccess: onClose })
           }
-          onClose={() => setChoosing(false)}
         />
-      </SafeAreaView>
-    </Modal>
+      ) : null}
+      <ErrorNotice error={error} />
+
+      {/* Rendered inside this sheet so it opens over it: iOS presents a second sheet only from within the first. */}
+      <PickFromListModal
+        visible={choosing}
+        title="Choose notes PDF"
+        items={pdfs}
+        emptyMessage="No PDFs in the library yet."
+        onPick={(notesId) =>
+          setNotes.mutate({ videoId: video.id, notesId }, { onSuccess: onClose })
+        }
+        onClose={() => setChoosing(false)}
+      />
+    </Sheet>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  body: { padding: spacing.lg, gap: spacing.md },
-});

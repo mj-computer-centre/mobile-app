@@ -8,17 +8,30 @@ export interface CardProps {
   onPress?: () => void;
   accessibilityLabel?: string;
   padded?: boolean;
+  /** Lifts the card off the page. For the few things that float: dialogs, the sign-in panel. */
+  raised?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
-export function Card({ children, onPress, accessibilityLabel, padded = true, style }: CardProps) {
+/**
+ * A surface for one self-contained thing. Lists of rows use ListGroup instead, and most page
+ * content sits straight on the background: not everything is a card.
+ */
+export function Card({
+  children,
+  onPress,
+  accessibilityLabel,
+  padded = true,
+  raised = false,
+  style,
+}: CardProps) {
   const { colors, dark } = useTheme();
   const cardStyle = [
     styles.card,
     padded && styles.padded,
     { backgroundColor: colors.surface, borderColor: colors.border },
     // Shadows read as dirt on a dark background; the border carries the edge there.
-    !dark && shadows.card,
+    !dark && (raised ? shadows.raised : shadows.card),
     style,
   ];
 
@@ -28,7 +41,7 @@ export function Card({ children, onPress, accessibilityLabel, padded = true, sty
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={({ pressed }) => [cardStyle, pressed && styles.pressed]}>
+      style={({ pressed }) => [cardStyle, pressed && { backgroundColor: colors.surfaceMuted }]}>
       {children}
     </Pressable>
   );
@@ -40,10 +53,5 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
-  padded: {
-    padding: spacing.lg,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
+  padded: { padding: spacing.lg },
 });

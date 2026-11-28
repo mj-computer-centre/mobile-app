@@ -67,18 +67,28 @@ async function edgeErrorCode(error: unknown): Promise<ErrorCode | null> {
   }
 }
 
+/** True when the project has no such function: the app was released before it was deployed. */
+function isMissingFunction(error: unknown): boolean {
+  const context = (error as { context?: unknown } | null)?.context;
+  return context instanceof Response && context.status === 404;
+}
+
 /**
  * Calls an edge function and validates its response against the shared contract, so a mismatch
- * between app and function fails loudly here rather than saving bad data.
+ * between app and function fails loudly here rather than saving bad data. The body is JSON, or
+ * a file's contents sent as they are (a picture for `upload-image`). `whenMissing` is the error
+ * to show when the function is not deployed yet, in place of "Something went wrong".
  */
 export async function invokeFunction<Schema extends z.ZodType>(
   name: string,
-  body: Record<string, unknown>,
+  body: Record<string, unknown> | ArrayBuffer | Blob,
   schema: Schema,
+  whenMissing?: ErrorCode,
 ): Promise<z.infer<Schema>> {
   const { data, error } = await supabase().functions.invoke(name, { body });
   if (error) {
-    const code = await edgeErrorCode(error);
+    const code =
+      (await edgeErrorCode(error)) ?? (isMissingFunction(error) ? whenMissing : undefined);
     throw code ? new AppError(code, { cause: error }) : toAppError(error);
   }
   const parsed = schema.safeParse(data);

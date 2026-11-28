@@ -1,25 +1,30 @@
 import { courseRowToForm, toAppError } from '@mcc/shared';
 import { router, Stack } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
 
-import { CourseCover, useCourseDetail } from '@/features/catalog';
+import { useCourseDetail } from '@/features/catalog';
 import { confirmAction, showMessage } from '@/lib/platform/confirm';
-import { pickImage } from '@/lib/platform/picked-file';
 import { routes } from '@/lib/routes';
-import { AppText, Button, ErrorState, LoadingState, Screen, spacing, useLayout } from '@/ui';
+import { Button, ErrorState, LoadingState, Screen } from '@/ui';
 
 import { AdminSection } from '../shared/admin-section';
 import { CourseDetailsForm } from './components/course-details-form';
 import { CourseUnitsEditor } from './components/course-units-editor';
-import { useCourseRecord, useDeleteCourse, useReplaceCourseImage, useUpdateCourse } from './hooks';
+import { CoverPicker } from './components/cover-picker';
+import {
+  useClearCourseImage,
+  useCourseRecord,
+  useDeleteCourse,
+  useReplaceCourseImage,
+  useUpdateCourse,
+} from './hooks';
 
 export function CourseEditorScreen({ courseId }: { courseId: string }) {
   const record = useCourseRecord(courseId);
   const detail = useCourseDetail(courseId);
   const update = useUpdateCourse(courseId);
   const replaceImage = useReplaceCourseImage(record.data);
+  const clearImage = useClearCourseImage(record.data);
   const remove = useDeleteCourse();
-  const { isWide } = useLayout();
 
   if (record.isPending || detail.isPending) return <LoadingState />;
   if (record.isError)
@@ -28,11 +33,16 @@ export function CourseEditorScreen({ courseId }: { courseId: string }) {
     return <ErrorState error={detail.error} onRetry={() => void detail.refetch()} />;
   const course = record.data;
 
-  const changePicture = async () => {
-    const file = await pickImage();
-    if (!file) return;
-    replaceImage.mutate(file, {
-      onError: (error) => showMessage('Could not upload the picture', toAppError(error).message),
+  const confirmRemovePicture = async () => {
+    const ok = await confirmAction({
+      title: 'Remove the picture?',
+      message: 'Students will see the coloured panel with the course’s short name instead.',
+      confirmLabel: 'Remove picture',
+      destructive: true,
+    });
+    if (!ok) return;
+    clearImage.mutate(undefined, {
+      onError: (error) => showMessage('Could not remove the picture', toAppError(error).message),
     });
   };
 
@@ -56,27 +66,23 @@ export function CourseEditorScreen({ courseId }: { courseId: string }) {
 
       <AdminSection
         title="Cover picture"
-        description="Shown on the course card. A 16:9 picture works best.">
-        <View style={isWide ? styles.coverRow : styles.coverStack}>
-          <View style={isWide ? styles.coverWide : undefined}>
-            <CourseCover title={course.title} imageUrl={detail.data.imageUrl} rounded />
-          </View>
-          <View style={[styles.coverActions, isWide && styles.grow]}>
-            {detail.data.imageUrl ? null : (
-              <AppText variant="caption" color="textMuted">
-                No picture yet. Until you add one, students see this coloured panel with the
-                course’s short name.
-              </AppText>
-            )}
-            <Button
-              label={course.thumbnail_path ? 'Change picture' : 'Add picture'}
-              icon="image"
-              variant="secondary"
-              loading={replaceImage.isPending}
-              onPress={() => void changePicture()}
-            />
-          </View>
-        </View>
+        description="Shown on the course card, cropped to 16:9. Upload one, or have AI draw it.">
+        <CoverPicker
+          title={course.title}
+          description={course.short_description}
+          // While a new picture is being stored, it is already shown.
+          imageUri={replaceImage.variables?.uri ?? detail.data.imageUrl}
+          busy={replaceImage.isPending || clearImage.isPending}
+          onPick={(picture) =>
+            replaceImage.mutate(picture, {
+              // The picture on show goes back to the saved one.
+              onSettled: () => replaceImage.reset(),
+              onError: (error) =>
+                showMessage('Could not save the picture', toAppError(error).message),
+            })
+          }
+          onRemove={course.thumbnail_path ? () => void confirmRemovePicture() : undefined}
+        />
       </AdminSection>
 
       <AdminSection title="Details">
@@ -94,7 +100,7 @@ export function CourseEditorScreen({ courseId }: { courseId: string }) {
       <AdminSection
         title="Units"
         description="Each unit holds videos and PDFs. Units can be shared between courses."
-        padded={false}>
+        bare>
         <CourseUnitsEditor courseId={courseId} units={detail.data.units} />
       </AdminSection>
 
@@ -108,11 +114,3 @@ export function CourseEditorScreen({ courseId }: { courseId: string }) {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  coverStack: { gap: spacing.md },
-  coverRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xl },
-  coverWide: { width: 320 },
-  coverActions: { gap: spacing.md },
-  grow: { flex: 1 },
-});

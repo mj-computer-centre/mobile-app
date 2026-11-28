@@ -1,37 +1,40 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  settingsFormSchema,
-  settingsRowToForm,
-  toAppError,
-  type SettingsFormValues,
-} from '@mcc/shared';
+import { settingsFormSchema, settingsRowToForm, type SettingsFormValues } from '@mcc/shared';
 import { useForm } from 'react-hook-form';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useSettings, type CentreSettings } from '@/features/contact';
 import {
   AppText,
   Button,
-  Card,
   ErrorState,
   FormTextField,
   LoadingState,
+  Notice,
   Screen,
   spacing,
 } from '@/ui';
 
+import { AdminSection } from '../shared/admin-section';
+import { ErrorNotice } from '../shared/error-notice';
 import { useSaveSettings } from './hooks';
 
+type SaveSettings = ReturnType<typeof useSaveSettings>;
+
+/** "Centre details": what the Contact page of the app and the website say about the centre. */
 export function SettingsScreen() {
   const settings = useSettings();
+  // The form below starts again from the saved values after every save. Keeping the save here,
+  // outside it, is what lets "Saved" stay on screen once that has happened.
+  const save = useSaveSettings();
+
   if (settings.isPending) return <LoadingState />;
   if (settings.isError)
     return <ErrorState error={settings.error} onRetry={() => void settings.refetch()} />;
-  return <SettingsForm key={settings.data.updated_at} settings={settings.data} />;
+  return <SettingsForm key={settings.data.updated_at} settings={settings.data} save={save} />;
 }
 
-function SettingsForm({ settings }: { settings: CentreSettings }) {
-  const save = useSaveSettings();
+function SettingsForm({ settings, save }: { settings: CentreSettings; save: SaveSettings }) {
   const { control, handleSubmit, formState } = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsFormSchema),
     defaultValues: settingsRowToForm(settings),
@@ -39,9 +42,13 @@ function SettingsForm({ settings }: { settings: CentreSettings }) {
 
   return (
     <Screen edges={[]}>
-      <AppText color="textMuted">Shown on the Contact tab. Leave a field empty to hide it.</AppText>
-      <Card>
-        <View style={{ gap: spacing.lg }}>
+      <AppText color="textMuted">
+        These details show on the Contact page of the app and on the website. Leave a field empty to
+        hide it.
+      </AppText>
+
+      <AdminSection title="Name and contact">
+        <View style={styles.fields}>
           <FormTextField control={control} name="centreName" label="Centre name" />
           <FormTextField
             control={control}
@@ -62,6 +69,11 @@ function SettingsForm({ settings }: { settings: CentreSettings }) {
             keyboardType="email-address"
             autoCapitalize="none"
           />
+        </View>
+      </AdminSection>
+
+      <AdminSection title="Where and when">
+        <View style={styles.fields}>
           <FormTextField control={control} name="address" label="Address" multiline />
           <FormTextField
             control={control}
@@ -76,6 +88,11 @@ function SettingsForm({ settings }: { settings: CentreSettings }) {
             label="Timings"
             placeholder="Mon–Sat, 8 am – 6 pm"
           />
+        </View>
+      </AdminSection>
+
+      <AdminSection title="Links">
+        <View style={styles.fields}>
           <FormTextField
             control={control}
             name="youtubeUrl"
@@ -97,16 +114,29 @@ function SettingsForm({ settings }: { settings: CentreSettings }) {
             autoCapitalize="none"
             keyboardType="url"
           />
-          {save.isError ? <AppText color="danger">{toAppError(save.error).message}</AppText> : null}
-          {save.isSuccess && !formState.isDirty ? <AppText color="success">Saved.</AppText> : null}
-          <Button
-            label="Save"
-            loading={save.isPending}
-            disabled={!formState.isDirty}
-            onPress={handleSubmit((values) => save.mutate(values))}
+          <FormTextField
+            control={control}
+            name="playStoreUrl"
+            label="Play Store link"
+            hint="Paste the app’s Play Store page once it is published. The website then shows a Get the app button."
+            autoCapitalize="none"
+            keyboardType="url"
           />
         </View>
-      </Card>
+      </AdminSection>
+
+      <ErrorNotice error={save.error} />
+      {save.isSuccess && !formState.isDirty ? <Notice tone="success">Saved.</Notice> : null}
+      <Button
+        label="Save"
+        loading={save.isPending}
+        disabled={!formState.isDirty}
+        onPress={handleSubmit((values) => save.mutate(values))}
+      />
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  fields: { gap: spacing.lg },
+});

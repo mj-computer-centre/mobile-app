@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { CourseOption } from '@/features/catalog';
-import { AppText, radius, spacing, useTheme } from '@/ui';
+import { AppText, Key, keyDepth, radius, spacing } from '@/ui';
 
 export interface CoursePickerProps {
   options: CourseOption[];
@@ -9,31 +9,31 @@ export interface CoursePickerProps {
   onChange: (courseId: string) => void;
 }
 
-/** Tappable chips: easier than a dropdown on a small phone. Tapping the chosen one clears it. */
+/**
+ * One key per course: easier than a dropdown on a small phone. The chosen key stays down;
+ * pressing it again lets go.
+ */
 export function CoursePicker({ options, value, onChange }: CoursePickerProps) {
-  const { colors } = useTheme();
   return (
     <View style={styles.wrap} accessibilityRole="radiogroup">
       {options.map((option) => {
         const selected = option.id === value;
         return (
-          <Pressable
+          <Key
             key={option.id}
+            tone={selected ? 'primary' : 'neutral'}
+            depth={keyDepth.sm}
+            cornerRadius={radius.sm + 2}
+            latched={selected}
             accessibilityRole="radio"
-            accessibilityState={{ selected }}
             accessibilityLabel={option.title}
+            accessibilityState={{ selected, checked: selected }}
             onPress={() => onChange(selected ? '' : option.id)}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: selected ? colors.primary : colors.surface,
-                borderColor: selected ? colors.primary : colors.border,
-              },
-            ]}>
+            faceStyle={styles.face}>
             <AppText variant="label" color={selected ? 'onPrimary' : 'text'}>
               {option.title}
             </AppText>
-          </Pressable>
+          </Key>
         );
       })}
     </View>
@@ -42,12 +42,5 @@ export function CoursePicker({ options, value, onChange }: CoursePickerProps) {
 
 const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    minHeight: 40,
-    justifyContent: 'center',
-  },
+  face: { minHeight: 38, paddingHorizontal: spacing.md },
 });

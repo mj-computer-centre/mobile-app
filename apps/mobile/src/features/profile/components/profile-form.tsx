@@ -12,10 +12,17 @@ import { CoursePicker } from './course-picker';
 export interface ProfileFormProps {
   initialValues: CompleteProfileValues;
   submitLabel: string;
+  /** The first-time form ends in the screen's main action; editing later is an ordinary save. */
+  emphasis?: 'accent' | 'primary';
   onSaved?: () => void;
 }
 
-export function ProfileForm({ initialValues, submitLabel, onSaved }: ProfileFormProps) {
+export function ProfileForm({
+  initialValues,
+  submitLabel,
+  emphasis = 'primary',
+  onSaved,
+}: ProfileFormProps) {
   const courses = useCourseOptions();
   const save = useSaveProfile();
   const { control, handleSubmit } = useForm<CompleteProfileValues>({
@@ -24,6 +31,7 @@ export function ProfileForm({ initialValues, submitLabel, onSaved }: ProfileForm
   });
 
   const onSubmit = handleSubmit((values) => save.mutate(values, { onSuccess: () => onSaved?.() }));
+  const options = courses.data ?? [];
 
   return (
     <View style={{ gap: spacing.lg }}>
@@ -51,27 +59,25 @@ export function ProfileForm({ initialValues, submitLabel, onSaved }: ProfileForm
         autoComplete="postal-address-locality"
       />
 
-      <View style={{ gap: spacing.sm }}>
-        <AppText variant="label">Which course are you interested in? (optional)</AppText>
-        <Controller
-          control={control}
-          name="interestedCourseId"
-          render={({ field }) => (
-            <CoursePicker
-              options={courses.data ?? []}
-              value={field.value}
-              onChange={field.onChange}
-            />
-          )}
-        />
-      </View>
+      {options.length > 0 ? (
+        <View style={{ gap: spacing.sm }}>
+          <AppText variant="label">Which course are you interested in? (optional)</AppText>
+          <Controller
+            control={control}
+            name="interestedCourseId"
+            render={({ field }) => (
+              <CoursePicker options={options} value={field.value} onChange={field.onChange} />
+            )}
+          />
+        </View>
+      ) : null}
 
       {save.isError ? (
         <AppText color="danger" accessibilityLiveRegion="polite">
           {toAppError(save.error).message}
         </AppText>
       ) : null}
-      <Button label={submitLabel} loading={save.isPending} onPress={onSubmit} />
+      <Button label={submitLabel} variant={emphasis} loading={save.isPending} onPress={onSubmit} />
     </View>
   );
 }

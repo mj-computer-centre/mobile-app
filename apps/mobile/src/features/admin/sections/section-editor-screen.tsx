@@ -2,7 +2,7 @@ import { toAppError } from '@mcc/shared';
 import { router, Stack } from 'expo-router';
 
 import { confirmAction, showMessage } from '@/lib/platform/confirm';
-import { AppText, Button, ErrorState, LoadingState, Screen } from '@/ui';
+import { Button, ErrorState, LoadingState, Notice, Screen } from '@/ui';
 
 import { AdminSection } from '../shared/admin-section';
 import { AddPdfPanel } from './components/add-pdf-panel';
@@ -43,9 +43,9 @@ export function SectionEditorScreen({ sectionId }: { sectionId: string }) {
     <Screen edges={[]}>
       <Stack.Screen options={{ title: unit.title }} />
       {courseCount > 1 ? (
-        <AppText color="warning">
-          This unit is shared by {courseCount} courses. Changes here show up in all of them.
-        </AppText>
+        <Notice tone="warning" title={`This unit is shared by ${courseCount} courses`}>
+          Changes here show up in all of them.
+        </Notice>
       ) : null}
 
       <AdminSection title="Unit details">
@@ -58,7 +58,7 @@ export function SectionEditorScreen({ sectionId }: { sectionId: string }) {
       <AdminSection
         title="Lessons"
         description="In the order students see them. The clip icon attaches notes to a video."
-        padded={false}>
+        bare>
         <SectionLessonsEditor sectionId={sectionId} lessons={unit.lessons} />
       </AdminSection>
 

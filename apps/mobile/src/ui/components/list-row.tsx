@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, type PressableStateCallbackType } from 'react-native';
 
 import { spacing, useTheme } from '../theme';
 import { AppText } from './app-text';
@@ -17,10 +17,13 @@ export interface ListRowProps {
   accessibilityHint?: string;
 }
 
+type RowState = PressableStateCallbackType & { hovered?: boolean };
+
 /**
  * Only the main area (leading, text, chevron) is pressable; `trailing` sits beside it. Nesting
- * buttons inside a pressable row is invalid HTML on the web admin and confuses screen readers,
- * which announce the whole row as one button.
+ * buttons inside a pressable row is invalid HTML on the web and confuses screen readers, which
+ * announce the whole row as one button. Rows answer a press by changing their background; only
+ * keys move.
  */
 export function ListRow({
   title,
@@ -36,7 +39,7 @@ export function ListRow({
     <>
       {leading}
       <View style={styles.text}>
-        <AppText variant="label" numberOfLines={2}>
+        <AppText variant="bodyStrong" numberOfLines={2}>
           {title}
         </AppText>
         {subtitle ? (
@@ -45,7 +48,7 @@ export function ListRow({
           </AppText>
         ) : null}
       </View>
-      {navigates ? <Icon name="chevron-right" color="textMuted" /> : null}
+      {navigates ? <Icon name="chevron-right" color="textFaint" /> : null}
     </>
   );
   const mainStyle = [styles.main, trailing ? styles.mainBesideTrailing : null];
@@ -58,7 +61,11 @@ export function ListRow({
           accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
           accessibilityHint={accessibilityHint}
           onPress={onPress}
-          style={({ pressed }) => [mainStyle, pressed && { backgroundColor: colors.surfaceMuted }]}>
+          android_ripple={{ color: colors.surfaceMuted }}
+          style={(state: RowState) => [
+            mainStyle,
+            (state.pressed || state.hovered) && { backgroundColor: colors.surfaceMuted },
+          ]}>
           {main}
         </Pressable>
       ) : (
@@ -70,7 +77,7 @@ export function ListRow({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', minHeight: 56 },
+  row: { flexDirection: 'row', alignItems: 'center', minHeight: 60 },
   main: {
     flex: 1,
     flexDirection: 'row',

@@ -9,14 +9,16 @@ import {
 import { router, Stack } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { StaffActions } from '@/features/auth';
+import { TestRow, useMyTests, useServerNow } from '@/features/tests';
 import { routes } from '@/lib/routes';
 import {
   AppText,
   Button,
-  Card,
   EmptyState,
   ErrorState,
   Icon,
+  ListGroup,
   LoadingState,
   Screen,
   SectionHeader,
@@ -51,31 +53,59 @@ export function CourseScreen({ courseId }: { courseId: string }) {
 
   const heading = (
     <View style={styles.heading}>
-      <AppText variant={isWide ? 'display' : 'title'}>{detail.title}</AppText>
+      <AppText variant="display" accessibilityRole="header">
+        {detail.title}
+      </AppText>
       {detail.shortDescription ? (
         <AppText color="textMuted">{detail.shortDescription}</AppText>
       ) : null}
       <CourseFacts detail={detail} />
     </View>
   );
-  const startButton = start ? (
-    <Button
-      label="Start learning"
-      icon="play"
-      onPress={() => router.push(routes.lesson(detail.id, start.id))}
-    />
-  ) : null;
+  const buy = (
+    <View style={styles.buy}>
+      <PriceTag
+        large
+        pricePaise={detail.pricePaise}
+        originalPricePaise={detail.originalPricePaise}
+      />
+      {start ? (
+        <Button
+          label="Start learning"
+          icon="play"
+          variant="accent"
+          onPress={() => router.push(routes.lesson(detail.id, start.id))}
+        />
+      ) : null}
+    </View>
+  );
+  const staffKeys = (
+    <StaffActions
+      note={
+        detail.isPublished
+          ? 'This is the page students see. Students do not see this box.'
+          : 'This course is a draft: only staff can open this page.'
+      }>
+      <Button
+        label="Edit this course"
+        icon="pencil-outline"
+        variant="secondary"
+        compact
+        onPress={() => router.push(routes.admin.course(detail.id))}
+      />
+    </StaffActions>
+  );
   const units = (
-    <View style={styles.units}>
+    <View style={styles.section}>
       <SectionHeader
         title="Units"
-        description={detail.units.length > 0 ? 'Tap a unit to see its lessons.' : undefined}
+        description={detail.units.length > 0 ? 'Open a unit to see its lessons.' : undefined}
       />
       {detail.units.length === 0 ? (
         <EmptyState
           icon="book-open-outline"
           title="Lessons are being added"
-          message="Check back soon."
+          message="The centre has not added lessons to this course yet. Check back soon."
         />
       ) : (
         <UnitList units={detail.units} onOpenLesson={openLesson} />
@@ -94,29 +124,24 @@ export function CourseScreen({ courseId }: { courseId: string }) {
         <View style={styles.columns}>
           <View style={styles.main}>
             {heading}
+            <CourseTests courseId={detail.id} />
             {units}
           </View>
           <View style={styles.side}>
-            <Card padded={false}>
-              <CourseCover title={detail.title} imageUrl={detail.imageUrl} />
-              <View style={styles.sideBody}>
-                <PriceTag
-                  pricePaise={detail.pricePaise}
-                  originalPricePaise={detail.originalPricePaise}
-                />
-                {startButton}
-              </View>
-            </Card>
-            <AboutCard detail={detail} />
+            <CourseCover title={detail.title} imageUrl={detail.imageUrl} rounded />
+            {buy}
+            {staffKeys}
+            <AboutList detail={detail} />
           </View>
         </View>
       ) : (
         <>
           <CourseCover title={detail.title} imageUrl={detail.imageUrl} rounded />
           {heading}
-          <PriceTag pricePaise={detail.pricePaise} originalPricePaise={detail.originalPricePaise} />
-          {startButton}
-          <AboutCard detail={detail} />
+          {buy}
+          {staffKeys}
+          <AboutList detail={detail} />
+          <CourseTests courseId={detail.id} />
           {units}
         </>
       )}
@@ -136,9 +161,11 @@ function CourseFacts({ detail }: { detail: CourseDetail }) {
       text: `${detail.units.length} unit${detail.units.length === 1 ? '' : 's'}`,
     },
   ];
-  if (videos) facts.push({ icon: 'play-circle-outline', text: `${videos} videos` });
+  if (videos)
+    facts.push({ icon: 'play-circle-outline', text: `${videos} video${videos === 1 ? '' : 's'}` });
   if (pdfs) facts.push({ icon: 'file-document-outline', text: `${pdfs} PDF notes` });
-  if (seconds > 0) facts.push({ icon: 'clock-outline', text: formatDuration(seconds) });
+  if (seconds > 0)
+    facts.push({ icon: 'clock-outline', text: `${formatDuration(seconds)} of video` });
   if (detail.durationText)
     facts.push({ icon: 'calendar-month-outline', text: `${detail.durationText} course` });
 
@@ -146,7 +173,7 @@ function CourseFacts({ detail }: { detail: CourseDetail }) {
     <View style={styles.facts}>
       {facts.map((fact) => (
         <View key={fact.text} style={styles.fact}>
-          <Icon name={fact.icon} size={16} color="textMuted" />
+          <Icon name={fact.icon} size={17} color="textMuted" />
           <AppText variant="caption" color="textMuted">
             {fact.text}
           </AppText>
@@ -156,29 +183,45 @@ function CourseFacts({ detail }: { detail: CourseDetail }) {
   );
 }
 
-function AboutCard({ detail }: { detail: CourseDetail }) {
-  const totalSeconds = totalVideoSeconds(detail);
-  if (detail.aboutPoints.length === 0 && totalSeconds === 0) return null;
+/** "About this course": the points the centre wrote, as a plain checked list. */
+function AboutList({ detail }: { detail: CourseDetail }) {
+  if (detail.aboutPoints.length === 0) return null;
   return (
-    <Card>
-      <AppText variant="heading" style={styles.cardTitle}>
+    <View style={styles.section}>
+      <AppText variant="heading" accessibilityRole="header">
         About this course
       </AppText>
-      {totalSeconds > 0 ? (
-        <Point text={`${formatDuration(totalSeconds)} of video lessons`} />
-      ) : null}
-      {detail.aboutPoints.map((point) => (
-        <Point key={point} text={point} />
-      ))}
-    </Card>
+      <View style={styles.points}>
+        {detail.aboutPoints.map((point) => (
+          <View key={point} style={styles.point}>
+            <Icon name="check-circle" size={19} color="success" />
+            <AppText style={styles.pointText}>{point}</AppText>
+          </View>
+        ))}
+      </View>
+    </View>
   );
 }
 
-function Point({ text }: { text: string }) {
+/** Tests the centre attached to this course, with where each stands for this student. */
+function CourseTests({ courseId }: { courseId: string }) {
+  const tests = useMyTests();
+  const now = useServerNow(tests.data?.clockOffsetMs ?? 0);
+  const mine = tests.data?.tests.filter((test) => test.courseId === courseId) ?? [];
+  if (mine.length === 0) return null;
   return (
-    <View style={styles.point}>
-      <Icon name="check-circle-outline" size={18} color="success" />
-      <AppText style={styles.pointText}>{text}</AppText>
+    <View style={styles.section}>
+      <SectionHeader title="Tests" description="Timed tests for this course." />
+      <ListGroup>
+        {mine.map((test) => (
+          <TestRow
+            key={test.id}
+            test={test}
+            now={now}
+            onPress={() => router.push(routes.test(test.id))}
+          />
+        ))}
+      </ListGroup>
     </View>
   );
 }
@@ -186,13 +229,13 @@ function Point({ text }: { text: string }) {
 const styles = StyleSheet.create({
   heading: { gap: spacing.sm },
   facts: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.lg, rowGap: spacing.xs },
-  fact: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  units: { gap: spacing.md },
-  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xxl },
-  main: { flex: 3, minWidth: 0, gap: spacing.xl },
-  side: { flex: 2, minWidth: 0, maxWidth: 400, gap: spacing.lg },
-  sideBody: { padding: spacing.lg, gap: spacing.md },
-  cardTitle: { marginBottom: spacing.sm },
-  point: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', paddingVertical: 2 },
+  fact: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  buy: { gap: spacing.md },
+  section: { gap: spacing.md },
+  points: { gap: spacing.sm },
+  point: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
   pointText: { flex: 1 },
+  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xxxl },
+  main: { flex: 3, minWidth: 0, gap: spacing.xxl },
+  side: { flex: 2, minWidth: 0, maxWidth: 400, gap: spacing.xl },
 });

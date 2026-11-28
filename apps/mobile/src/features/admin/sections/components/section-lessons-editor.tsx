@@ -1,22 +1,23 @@
-import { formatDuration, moveItem, toAppError, type Lesson, type VideoLesson } from '@mcc/shared';
+import { formatDuration, moveItem, type Lesson, type VideoLesson } from '@mcc/shared';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { confirmAction } from '@/lib/platform/confirm';
-import { AppText, Button, Icon, IconButton, ListRow, spacing, Thumbnail } from '@/ui';
+import { AppText, Button, IconButton, IconChip, ListGroup, spacing, Thumbnail } from '@/ui';
 
 import { useLibraryLessons } from '../../lessons/hooks';
+import { ErrorNotice } from '../../shared/error-notice';
 import { PickFromListModal } from '../../shared/pick-from-list-modal';
 import { ReorderControls } from '../../shared/reorder-controls';
 import { useSectionLessons } from '../hooks';
 import { VideoNotesSheet } from './video-notes-sheet';
 
+const THUMBNAIL_WIDTH = 88;
+
+// A video's length is on its thumbnail, so the line under the title is about its notes.
 function describe(lesson: Lesson): string {
   if (lesson.kind === 'pdf') return 'PDF notes';
-  const parts = ['Video'];
-  if (lesson.durationSeconds) parts.push(formatDuration(lesson.durationSeconds));
-  parts.push(lesson.notes ? `notes: ${lesson.notes.title}` : 'no notes');
-  return parts.join(' · ');
+  return lesson.notes ? `Video · notes: ${lesson.notes.title}` : 'Video · no notes';
 }
 
 export function SectionLessonsEditor({
@@ -52,26 +53,42 @@ export function SectionLessonsEditor({
   };
 
   return (
-    <View>
+    <View style={styles.root}>
       {lessons.length === 0 ? (
-        <AppText color="textMuted" style={styles.padded}>
+        <AppText color="textMuted">
           No lessons yet. Add a YouTube playlist or upload a PDF below.
         </AppText>
       ) : (
-        lessons.map((lesson, index) => (
-          <ListRow
-            key={lesson.id}
-            title={`${index + 1}. ${lesson.title}`}
-            subtitle={describe(lesson)}
-            leading={
-              lesson.kind === 'video' ? (
-                <Thumbnail uri={lesson.thumbnailUrl} width={72} />
-              ) : (
-                <Icon name="file-pdf-box" size={30} color="danger" />
-              )
-            }
-            trailing={
-              <View style={styles.actions}>
+        <ListGroup>
+          {lessons.map((lesson, index) => (
+            // The controls drop under the title when a phone is too narrow to hold both, so a
+            // long title is never squeezed into a sliver beside four buttons.
+            <View key={lesson.id} style={styles.row}>
+              <View style={styles.main}>
+                {lesson.kind === 'video' ? (
+                  <Thumbnail
+                    uri={lesson.thumbnailUrl}
+                    width={THUMBNAIL_WIDTH}
+                    fallbackIcon="play-circle-outline"
+                    caption={
+                      lesson.durationSeconds ? formatDuration(lesson.durationSeconds) : undefined
+                    }
+                  />
+                ) : (
+                  <View style={styles.pdf}>
+                    <IconChip name="file-document-outline" tone="danger" size={40} />
+                  </View>
+                )}
+                <View style={styles.text}>
+                  <AppText variant="bodyStrong" numberOfLines={2}>
+                    {`${index + 1}. ${lesson.title}`}
+                  </AppText>
+                  <AppText variant="caption" color="textMuted" numberOfLines={2}>
+                    {describe(lesson)}
+                  </AppText>
+                </View>
+              </View>
+              <View style={styles.controls}>
                 {lesson.kind === 'video' ? (
                   <IconButton
                     icon="paperclip"
@@ -92,21 +109,19 @@ export function SectionLessonsEditor({
                   removeLabel="Remove from unit"
                 />
               </View>
-            }
-          />
-        ))
+            </View>
+          ))}
+        </ListGroup>
       )}
 
-      <View style={styles.padded}>
-        <Button
-          label="Add from the library"
-          icon="bookshelf"
-          variant="secondary"
-          loading={attach.isPending}
-          onPress={() => setPicking(true)}
-        />
-        {error ? <AppText color="danger">{toAppError(error).message}</AppText> : null}
-      </View>
+      <Button
+        label="Add from the library"
+        icon="bookshelf"
+        variant="secondary"
+        loading={attach.isPending}
+        onPress={() => setPicking(true)}
+      />
+      <ErrorNotice error={error} />
 
       <PickFromListModal
         visible={picking}
@@ -122,6 +137,28 @@ export function SectionLessonsEditor({
 }
 
 const styles = StyleSheet.create({
-  padded: { padding: spacing.lg, gap: spacing.md },
-  actions: { flexDirection: 'row', alignItems: 'center' },
+  root: { gap: spacing.md },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    columnGap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.sm,
+  },
+  main: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 240,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  pdf: { width: THUMBNAIL_WIDTH, alignItems: 'center' },
+  text: { flex: 1, gap: 2 },
+  // Pushed to the right edge, on the title's line or on their own.
+  controls: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' },
 });

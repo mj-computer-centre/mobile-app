@@ -6,16 +6,17 @@ import { StyleSheet, View } from 'react-native';
 import { confirmAction, showMessage } from '@/lib/platform/confirm';
 import { routes } from '@/lib/routes';
 import {
-  Button,
-  Card,
+  EmptyState,
   ErrorState,
-  Icon,
   IconButton,
+  IconChip,
+  ListGroup,
   ListRow,
-  LoadingState,
   Screen,
-  spacing,
+  SegmentedControl,
+  SkeletonRows,
   TextField,
+  type Segment,
 } from '@/ui';
 
 import type { LibraryLesson } from '../lessons/api';
@@ -25,7 +26,24 @@ import { RenameLessonSheet } from './rename-lesson-sheet';
 
 type Tab = 'units' | 'lessons';
 
+const TABS: readonly Segment<Tab>[] = [
+  { value: 'units', label: 'Units' },
+  { value: 'lessons', label: 'Videos and PDFs' },
+];
+
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
+function lessonSubtitle(lesson: LibraryLesson): string {
+  return [
+    lesson.kind === 'video' ? 'Video' : 'PDF',
+    lesson.sectionCount ? `in ${plural(lesson.sectionCount, 'unit')}` : 'not in any unit',
+    lesson.attachedToVideoCount
+      ? `notes for ${plural(lesson.attachedToVideoCount, 'video')}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
 
 export function LibraryScreen() {
   const [tab, setTab] = useState<Tab>('units');
@@ -71,85 +89,97 @@ export function LibraryScreen() {
   };
 
   const active = tab === 'units' ? sections : lessons;
+  const matches = (title: string) => !needle || title.toLowerCase().includes(needle);
+  const units = (sections.data ?? []).filter((section) => matches(section.title));
+  const items = (lessons.data ?? []).filter((lesson) => matches(lesson.title));
 
   return (
     <Screen edges={[]} refreshing={active.isRefetching} onRefresh={() => void active.refetch()}>
-      <View style={styles.tabs}>
-        <Button
-          label="Units"
-          compact
-          variant={tab === 'units' ? 'primary' : 'secondary'}
-          onPress={() => setTab('units')}
-        />
-        <Button
-          label="Videos and PDFs"
-          compact
-          variant={tab === 'lessons' ? 'primary' : 'secondary'}
-          onPress={() => setTab('lessons')}
-        />
-      </View>
+      <SegmentedControl
+        accessibilityLabel="What to show"
+        segments={TABS}
+        value={tab}
+        onChange={setTab}
+      />
       <TextField label="Search" value={search} onChangeText={setSearch} autoCorrect={false} />
 
       {active.isPending ? (
-        <LoadingState />
+        <SkeletonRows count={5} />
       ) : active.isError ? (
         <ErrorState error={active.error} onRetry={() => void active.refetch()} />
       ) : tab === 'units' ? (
-        <Card padded={false}>
-          {(sections.data ?? [])
-            .filter((s) => !needle || s.title.toLowerCase().includes(needle))
-            .map((s) => (
+        units.length === 0 ? (
+          <EmptyState
+            icon="view-list-outline"
+            title={needle ? 'No unit matches' : 'No units yet'}
+            message={
+              needle ? undefined : 'Units are made inside a course: open a course and add one.'
+            }
+          />
+        ) : (
+          <ListGroup>
+            {units.map((unit) => (
               <ListRow
-                key={s.id}
-                title={s.title}
+                key={unit.id}
+                title={unit.title}
                 subtitle={
-                  s.courseCount ? `In ${plural(s.courseCount, 'course')}` : 'Not in any course'
+                  unit.courseCount
+                    ? `In ${plural(unit.courseCount, 'course')}`
+                    : 'Not in any course'
                 }
-                onPress={() => router.push(routes.admin.section(s.id))}
+                leading={<IconChip name="view-list-outline" tone="neutral" size={40} />}
+                onPress={() => router.push(routes.admin.section(unit.id))}
+                accessibilityHint="Opens the unit to edit its lessons"
                 trailing={
                   <IconButton
                     icon="delete-outline"
-                    label={`Delete ${s.title}`}
+                    label={`Delete ${unit.title}`}
                     color="danger"
-                    onPress={() => void confirmDeleteSection(s.id, s.title, s.courseCount)}
+                    onPress={() => void confirmDeleteSection(unit.id, unit.title, unit.courseCount)}
                   />
                 }
               />
             ))}
-        </Card>
+          </ListGroup>
+        )
+      ) : items.length === 0 ? (
+        <EmptyState
+          icon="play-box-multiple-outline"
+          title={needle ? 'Nothing matches' : 'No videos or PDFs yet'}
+          message={needle ? undefined : 'They are added inside a unit: open a course, then a unit.'}
+        />
       ) : (
-        <Card padded={false}>
-          {(lessons.data ?? [])
-            .filter((l) => !needle || l.title.toLowerCase().includes(needle))
-            .map((l) => (
-              <ListRow
-                key={l.id}
-                title={l.title}
-                subtitle={`${l.kind === 'video' ? 'Video' : 'PDF'} · ${l.sectionCount ? `in ${plural(l.sectionCount, 'unit')}` : 'not in any unit'}${l.attachedToVideoCount ? ` · notes for ${plural(l.attachedToVideoCount, 'video')}` : ''}`}
-                leading={
-                  <Icon
-                    name={l.kind === 'video' ? 'youtube' : 'file-pdf-box'}
-                    color={l.kind === 'video' ? 'danger' : 'primary'}
+        <ListGroup>
+          {items.map((lesson) => (
+            <ListRow
+              key={lesson.id}
+              title={lesson.title}
+              subtitle={lessonSubtitle(lesson)}
+              leading={
+                <IconChip
+                  name={lesson.kind === 'video' ? 'play-circle-outline' : 'file-document-outline'}
+                  tone={lesson.kind === 'video' ? 'primary' : 'danger'}
+                  size={40}
+                />
+              }
+              trailing={
+                <View style={styles.actions}>
+                  <IconButton
+                    icon="pencil"
+                    label={`Rename ${lesson.title}`}
+                    onPress={() => setRenaming(lesson)}
                   />
-                }
-                trailing={
-                  <View style={styles.actions}>
-                    <IconButton
-                      icon="pencil"
-                      label={`Rename ${l.title}`}
-                      onPress={() => setRenaming(l)}
-                    />
-                    <IconButton
-                      icon="delete-outline"
-                      label={`Delete ${l.title}`}
-                      color="danger"
-                      onPress={() => void confirmDeleteLesson(l)}
-                    />
-                  </View>
-                }
-              />
-            ))}
-        </Card>
+                  <IconButton
+                    icon="delete-outline"
+                    label={`Delete ${lesson.title}`}
+                    color="danger"
+                    onPress={() => void confirmDeleteLesson(lesson)}
+                  />
+                </View>
+              }
+            />
+          ))}
+        </ListGroup>
       )}
       <RenameLessonSheet lesson={renaming} onClose={() => setRenaming(null)} />
     </Screen>
@@ -157,6 +187,5 @@ export function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  tabs: { flexDirection: 'row', gap: spacing.sm },
   actions: { flexDirection: 'row' },
 });

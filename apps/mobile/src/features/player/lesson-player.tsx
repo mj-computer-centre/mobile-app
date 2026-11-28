@@ -29,18 +29,24 @@ export interface LessonPlayerProps {
  */
 export function LessonPlayer({ videoId, onEnded, onError, endOverlay }: LessonPlayerProps) {
   const { colors } = useTheme();
-  const { width } = useWindowDimensions();
+  const window = useWindowDimensions();
+  // The player is as wide as the space it is given (a column on a tablet, the screen on a
+  // phone). Until that has been measured, the window's width is the best guess.
+  const [measured, setMeasured] = useState(0);
   const [ended, setEnded] = useState(false);
   const onFullScreenChange = useFullscreenOrientation();
   const { playerPageUrl } = getEnv();
 
-  const height = Math.round((Math.min(width, MAX_CONTENT_WIDTH) * 9) / 16);
+  const width = measured > 0 ? measured : Math.min(window.width, MAX_CONTENT_WIDTH);
+  const height = Math.round((width * 9) / 16);
 
   const onShouldStartLoadWithRequest = (request: ShouldStartLoadRequest) =>
     isAllowedPlayerRequest({ url: request.url, isTopFrame: request.isTopFrame }, playerPageUrl);
 
   return (
-    <View style={[styles.frame, { height, backgroundColor: colors.surfaceMuted }]}>
+    <View
+      onLayout={(event) => setMeasured(Math.round(event.nativeEvent.layout.width))}
+      style={[styles.frame, { height, backgroundColor: colors.surfaceMuted }]}>
       <YoutubePlayer
         key={videoId}
         height={height}
@@ -66,8 +72,7 @@ export function LessonPlayer({ videoId, onEnded, onError, endOverlay }: LessonPl
         }}
       />
       {ended && endOverlay ? (
-        <View
-          style={[StyleSheet.absoluteFill, styles.overlay, { backgroundColor: colors.surface }]}>
+        <View style={[StyleSheet.absoluteFill, styles.overlay, { backgroundColor: colors.hero }]}>
           {endOverlay}
         </View>
       ) : null}

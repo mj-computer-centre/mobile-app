@@ -15,7 +15,13 @@ export function NotesScreen({ courseId, lessonId }: { courseId: string; lessonId
 
   const pdf = findPdf(course.data, lessonId);
   if (!pdf)
-    return <EmptyState icon="file-remove-outline" title="These notes are no longer available" />;
+    return (
+      <EmptyState
+        icon="file-remove-outline"
+        title="These notes are no longer available"
+        message="The centre may have replaced or removed them."
+      />
+    );
 
   return (
     <Screen scroll={false} padded={false} edges={['bottom']}>

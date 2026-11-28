@@ -1,14 +1,18 @@
-import { Link } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { toAppError } from '@mcc/shared';
+import { Link, router } from 'expo-router';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PageTitle } from '@/lib/page-title';
 import { routes } from '@/lib/routes';
 import {
   AppText,
+  BrandMark,
   Button,
+  CENTRE_NAME,
+  CENTRE_PLACE,
   Icon,
   radius,
-  Screen,
   shadows,
   spacing,
   useLayout,
@@ -21,74 +25,59 @@ import { useSignIn } from '../use-auth-actions';
 const FEATURES: { icon: IconName; text: string }[] = [
   { icon: 'play-circle-outline', text: 'Video lessons that play right inside the app' },
   { icon: 'file-document-outline', text: 'PDF notes for every unit' },
-  { icon: 'school-outline', text: 'ADCA, DCA, Tally and more, free for now' },
+  { icon: 'clipboard-text-clock-outline', text: 'Timed tests with your score and rank' },
 ];
 
 export function SignInScreen() {
   const { isWide } = useLayout();
-  return isWide ? <WideSignIn /> : <PhoneSignIn />;
-}
-
-/** Phones: the centre's name and what the app offers, with the sign-in button at thumb height. */
-function PhoneSignIn() {
-  const { colors } = useTheme();
   return (
-    <Screen edges={['top', 'bottom']}>
-      <View style={styles.hero}>
-        <View style={[styles.logo, { backgroundColor: colors.primarySoft }]}>
-          <Icon name="laptop" size={48} color="primary" />
-        </View>
-        <AppText variant="title" style={styles.centre}>
-          Mishra Computer Centre
-        </AppText>
-        <AppText color="textMuted" style={styles.centre}>
-          Free computer courses with video lessons and PDF notes.
-        </AppText>
-        <View style={styles.features}>
-          {FEATURES.map((feature) => (
-            <Feature key={feature.icon} {...feature} />
-          ))}
-        </View>
-      </View>
-      <View style={styles.phoneActions}>
-        <SignInActions />
-      </View>
-    </Screen>
+    <>
+      <PageTitle title="Sign in" />
+      {isWide ? <WideSignIn /> : <PhoneSignIn />}
+    </>
   );
 }
 
-/** Wide screens: a brand panel on the left and a sign-in card on the right. */
+/** Phones: the centre's name on its own colour, with the way in at thumb height. */
+function PhoneSignIn() {
+  const { colors } = useTheme();
+  return (
+    <SafeAreaView style={[styles.phoneRoot, { backgroundColor: colors.hero }]}>
+      <ScrollView contentContainerStyle={styles.phoneScroll}>
+        <View style={styles.phoneBrand}>
+          <BrandMark size={72} />
+          <View style={styles.brandText}>
+            <AppText variant="display" color="onHero" accessibilityRole="header">
+              {CENTRE_NAME}
+            </AppText>
+            <AppText color="onHeroMuted">{CENTRE_PLACE}</AppText>
+          </View>
+          <Features />
+        </View>
+        <View style={[styles.phoneActions, { backgroundColor: colors.background }]}>
+          <SignInActions />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+/** Wide screens: the brand panel on the left, the sign-in card on the right. */
 function WideSignIn() {
   const { colors, dark } = useTheme();
   return (
     <SafeAreaView style={[styles.wideRoot, { backgroundColor: colors.background }]}>
       <View style={[styles.brandPanel, { backgroundColor: colors.hero }]}>
-        <View style={[styles.brandLogo, { backgroundColor: colors.onHeroSubtle }]}>
-          <Icon name="laptop" size={36} color="onHero" />
-        </View>
+        <BrandMark size={72} />
         <View style={styles.brandText}>
-          <AppText variant="overline" color="onHeroMuted">
-            MAKHDUMPUR · JEHANABAD
-          </AppText>
-          <AppText variant="display" color="onHero">
-            Mishra Computer Centre
+          <AppText variant="hero" color="onHero" accessibilityRole="header">
+            {CENTRE_NAME}
           </AppText>
           <AppText color="onHeroMuted" style={styles.brandLead}>
-            Learn computers at your own pace with the centre’s video lessons and notes.
+            Learn computers at your own pace with the centre’s video lessons, notes and tests.
           </AppText>
         </View>
-        <View style={styles.brandFeatures}>
-          {FEATURES.map((feature) => (
-            <View key={feature.icon} style={styles.brandFeature}>
-              <View style={[styles.brandFeatureIcon, { backgroundColor: colors.onHeroSubtle }]}>
-                <Icon name={feature.icon} size={20} color="onHero" />
-              </View>
-              <AppText color="onHero" style={styles.grow}>
-                {feature.text}
-              </AppText>
-            </View>
-          ))}
-        </View>
+        <Features />
       </View>
 
       <ScrollView contentContainerStyle={styles.formPane}>
@@ -99,32 +88,63 @@ function WideSignIn() {
             !dark && shadows.raised,
           ]}>
           <View style={styles.cardHeading}>
-            <AppText variant="title">Welcome</AppText>
+            <AppText variant="title">Sign in</AppText>
             <AppText color="textMuted">
-              Sign in with your Google account to open your courses. Staff use the same button to
+              Use your Google account to open your courses and tests. Staff use the same button to
               reach the admin panel.
             </AppText>
           </View>
           <SignInActions />
         </View>
+        {Platform.OS === 'web' ? (
+          <Button
+            label="Back to the website"
+            variant="ghost"
+            icon="arrow-left"
+            onPress={() => router.replace(routes.home)}
+          />
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+function Features() {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.features}>
+      {FEATURES.map((feature) => (
+        <View key={feature.icon} style={styles.feature}>
+          <View style={[styles.featureIcon, { backgroundColor: colors.onHeroSubtle }]}>
+            <Icon name={feature.icon} size={20} color="onHero" />
+          </View>
+          <AppText color="onHero" style={styles.grow}>
+            {feature.text}
+          </AppText>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 function SignInActions() {
   const signIn = useSignIn();
+  const error = signIn.isError ? toAppError(signIn.error) : null;
   return (
     <View style={styles.actions}>
+      {/* A plain white key with Google's mark, as Google asks sign-in buttons to look. */}
       <Button
         label="Continue with Google"
         icon="google"
+        variant="secondary"
         loading={signIn.isPending}
         onPress={() => signIn.mutate()}
       />
-      {signIn.isError ? (
+      {error ? (
         <AppText color="danger" style={styles.centre} accessibilityLiveRegion="polite">
-          Could not sign in. Check your internet connection and try again.
+          {error.code === 'network' || error.code === 'demo_mode'
+            ? error.message
+            : 'Could not sign in. Check your internet connection and try again.'}
         </AppText>
       ) : null}
       <AppText variant="caption" color="textMuted" style={styles.centre}>
@@ -140,52 +160,52 @@ function SignInActions() {
   );
 }
 
-function Feature({ icon, text }: { icon: IconName; text: string }) {
-  return (
-    <View style={styles.feature}>
-      <Icon name={icon} size={20} color="primary" />
-      <AppText style={styles.grow}>{text}</AppText>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  hero: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  logo: { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center' },
-  features: { alignSelf: 'stretch', gap: spacing.md, marginTop: spacing.lg },
+  phoneRoot: { flex: 1 },
+  phoneScroll: { flexGrow: 1 },
+  phoneBrand: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    gap: spacing.xl,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xxxl,
+  },
+  phoneActions: {
+    padding: spacing.xl,
+    paddingBottom: spacing.xxl,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+  },
+  brandText: { gap: spacing.sm },
+  features: { gap: spacing.md },
   feature: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  featureIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   actions: { gap: spacing.md },
-  phoneActions: { paddingBottom: spacing.xl },
   centre: { textAlign: 'center' },
   grow: { flex: 1 },
 
   wideRoot: { flex: 1, flexDirection: 'row' },
   brandPanel: {
     flex: 1,
-    maxWidth: 560,
-    padding: spacing.xxl * 2,
+    maxWidth: 600,
+    padding: spacing.huge,
     justifyContent: 'center',
     gap: spacing.xxl,
   },
-  brandLogo: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.lg,
+  brandLead: { fontSize: 17, lineHeight: 26, maxWidth: 420 },
+  formPane: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: spacing.xxl,
+    gap: spacing.lg,
   },
-  brandText: { gap: spacing.sm },
-  brandLead: { fontSize: 17, lineHeight: 26 },
-  brandFeatures: { gap: spacing.lg },
-  brandFeature: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  brandFeatureIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  formPane: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xxl },
   card: {
     width: '100%',
     maxWidth: 420,

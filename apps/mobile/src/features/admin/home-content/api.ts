@@ -1,21 +1,15 @@
-import {
-  BUCKETS,
-  LIMITS,
-  bannerImagePath,
-  settingsFormToRow,
-  type SettingsFormValues,
-} from '@mcc/shared';
-import { randomUUID } from 'expo-crypto';
+import { IMAGE_WIDTHS, settingsFormToRow, type SettingsFormValues } from '@mcc/shared';
 
 import { run, runVoid } from '@/lib/data';
 import { fileUrls } from '@/lib/file-urls';
-import { fileExtension, type PickedFile } from '@/lib/platform/picked-file';
+import type { PickedFile } from '@/lib/platform/picked-file';
 import { supabase } from '@/lib/supabase';
 
-import { removeFiles, uploadFile } from '../shared/uploads';
+import { removeImages, storeImage } from '../shared/uploads';
 
 export interface AdminBanner {
   id: string;
+  /** What the row holds: a Cloudinary URL, or a media-bucket path for an older banner. */
   imagePath: string;
   imageUrl: string;
   courseId: string | null;
@@ -34,19 +28,18 @@ export async function fetchAllBanners(): Promise<AdminBanner[]> {
   return rows.map((row) => ({
     id: row.id,
     imagePath: row.image_path,
-    imageUrl: urls.mediaUrl(row.image_path),
+    imageUrl: urls.mediaUrl(row.image_path, IMAGE_WIDTHS.banner),
     courseId: row.course_id,
     isActive: row.is_active,
   }));
 }
 
 export async function addBanner(file: PickedFile, position: number): Promise<void> {
-  const path = bannerImagePath(`${randomUUID()}.${fileExtension(file)}`);
-  await uploadFile(BUCKETS.media, path, file, LIMITS.imageBytes);
+  const url = await storeImage('banner', file);
   try {
-    await runVoid(supabase().from('banners').insert({ image_path: path, position }));
+    await runVoid(supabase().from('banners').insert({ image_path: url, position }));
   } catch (error) {
-    await removeFiles(BUCKETS.media, [path]);
+    await removeImages([url]);
     throw error;
   }
 }
@@ -77,7 +70,7 @@ export async function saveBannerOrder(bannerIds: string[]): Promise<void> {
 
 export async function deleteBanner(banner: Pick<AdminBanner, 'id' | 'imagePath'>): Promise<void> {
   await runVoid(supabase().from('banners').delete().eq('id', banner.id));
-  await removeFiles(BUCKETS.media, [banner.imagePath]);
+  await removeImages([banner.imagePath]);
 }
 
 export async function saveSettings(values: SettingsFormValues): Promise<void> {

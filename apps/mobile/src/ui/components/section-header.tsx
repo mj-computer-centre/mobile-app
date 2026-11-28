@@ -9,17 +9,22 @@ export function SectionHeader({
   title,
   description,
   action,
+  large = false,
 }: {
   title: string;
-  description?: string;
-  action?: { label: string; onPress: () => void };
+  description?: string | undefined;
+  action?: { label: string; onPress: () => void } | undefined;
+  /** A bigger heading, for the sections of a public web page. */
+  large?: boolean;
 }) {
   return (
     <View style={styles.row}>
       <View style={styles.text}>
-        <AppText variant="heading">{title}</AppText>
+        <AppText variant={large ? 'title' : 'heading'} accessibilityRole="header">
+          {title}
+        </AppText>
         {description ? (
-          <AppText variant="caption" color="textMuted">
+          <AppText variant={large ? 'body' : 'caption'} color="textMuted">
             {description}
           </AppText>
         ) : null}

@@ -1,7 +1,7 @@
 import type { CourseSummary } from '@mcc/shared';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, Badge, Card, Icon, spacing } from '@/ui';
+import { AppText, Badge, Icon, Key, keyDepth, radius, spacing } from '@/ui';
 
 import { CourseCover } from './course-cover';
 import { PriceTag } from './price-tag';
@@ -16,13 +16,18 @@ export interface CourseCardProps {
   showDraftBadge?: boolean;
 }
 
+/** A course, as a large key: pressing it opens the course. */
 export function CourseCard({ course, onPress, width, stretch, showDraftBadge }: CourseCardProps) {
   return (
-    <Card
-      padded={false}
+    <Key
+      tone="neutral"
+      depth={keyDepth.lg}
+      cornerRadius={radius.lg}
       onPress={onPress}
       accessibilityLabel={course.title}
-      style={width ? { width } : stretch ? styles.stretch : undefined}>
+      accessibilityHint="Opens the course"
+      style={width ? { width } : stretch ? styles.stretch : undefined}
+      faceStyle={styles.face}>
       <CourseCover title={course.title} imageUrl={course.imageUrl} />
       <View style={styles.body}>
         <AppText variant="heading" numberOfLines={1}>
@@ -37,7 +42,7 @@ export function CourseCard({ course, onPress, width, stretch, showDraftBadge }: 
           <PriceTag pricePaise={course.pricePaise} originalPricePaise={course.originalPricePaise} />
           {course.durationText ? (
             <View style={styles.duration}>
-              <Icon name="clock-outline" size={14} color="textMuted" />
+              <Icon name="calendar-month-outline" size={15} color="textMuted" />
               <AppText variant="caption" color="textMuted">
                 {course.durationText}
               </AppText>
@@ -45,15 +50,21 @@ export function CourseCard({ course, onPress, width, stretch, showDraftBadge }: 
           ) : null}
         </View>
         {showDraftBadge && !course.isPublished ? (
-          <Badge label="Draft — students can’t see it" tone="warning" />
+          <Badge label="Draft: students can’t see it" tone="warning" icon="pencil-outline" />
         ) : null}
       </View>
-    </Card>
+    </Key>
   );
 }
 
 const styles = StyleSheet.create({
   stretch: { flexGrow: 1 },
+  face: {
+    flexGrow: 1,
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
+    overflow: 'hidden',
+  },
   body: { padding: spacing.lg, gap: spacing.xs, flexGrow: 1 },
   footer: {
     flexDirection: 'row',
@@ -62,7 +73,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
     marginTop: 'auto',
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
   },
   duration: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 });

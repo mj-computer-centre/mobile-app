@@ -1,0 +1,107 @@
+<!doctype html>
+<!--
+  The page every address of the website starts from (the site is a single-page app; see
+  docs/architecture/overview.md). Expo fills in %LANG_ISO_CODE% and %WEB_TITLE% and adds the
+  description, theme colour, favicon and scripts from app.config.ts.
+-->
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>%WEB_TITLE%</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Mishra Computer Centre" />
+    <meta
+      property="og:title"
+      content="Mishra Computer Centre: computer courses in Makhdumpur, Jehanabad" />
+    <meta
+      property="og:description"
+      content="Video lessons, PDF notes and timed tests for ADCA, DCA, Tally and more, from Mishra Computer Centre." />
+    <!-- The react-native-web style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+        margin: 0;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+    <!--
+      Shown until the app has loaded, which can take a while on a slow connection: the centre's
+      mark (the M key) on the page colour. The app replaces everything inside #root when it
+      starts, and its own loading screen (app-shell/splash-view.tsx) looks the same.
+    -->
+    <style>
+      body {
+        background: #f3f4fb;
+      }
+      .mcc-loading {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .mcc-key {
+        width: 64px;
+        height: 58px;
+        border-radius: 16px;
+        background: #ffb61f;
+        box-shadow: 0 6px 0 #d08a00;
+        color: #121640;
+        font:
+          800 29px/58px system-ui,
+          sans-serif;
+        text-align: center;
+      }
+      .mcc-noscript {
+        max-width: 34rem;
+        margin: 3rem auto;
+        padding: 0 1.25rem;
+        color: #11142d;
+        font:
+          16px/1.6 system-ui,
+          sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #0b0e2a;
+        }
+        .mcc-noscript {
+          color: #eef0ff;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>
+      <div class="mcc-noscript">
+        <h1>Mishra Computer Centre</h1>
+        <p>
+          Computer courses from Mishra Computer Centre, Makhdumpur, Jehanabad, Bihar: video lessons,
+          PDF notes and timed tests.
+        </p>
+        <p>
+          This website needs JavaScript to show the courses. Please switch JavaScript on in your
+          browser and open the page again.
+        </p>
+      </div>
+    </noscript>
+    <!-- The root element for the app. -->
+    <div id="root">
+      <div class="mcc-loading" role="progressbar" aria-label="Loading">
+        <div class="mcc-key" aria-hidden="true">M</div>
+      </div>
+    </div>
+  </body>
+</html>

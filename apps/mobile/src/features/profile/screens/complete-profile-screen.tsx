@@ -1,4 +1,6 @@
-import { AppText, ErrorState, LoadingState, Screen } from '@/ui';
+import { View } from 'react-native';
+
+import { AppText, BrandMark, ErrorState, LoadingState, Screen, spacing } from '@/ui';
 
 import { ProfileForm } from '../components/profile-form';
 import { useMyProfile } from '../hooks';
@@ -11,12 +13,24 @@ export function CompleteProfileScreen() {
   if (profile.isError)
     return <ErrorState error={profile.error} onRetry={() => void profile.refetch()} />;
 
+  const firstName = profile.data.full_name?.split(' ')[0];
+
   return (
     <Screen>
-      <AppText variant="title">Welcome!</AppText>
-      <AppText color="textMuted">Tell us a little about you. It takes a few seconds.</AppText>
+      <View style={{ gap: spacing.md }}>
+        <BrandMark size={48} />
+        <View style={{ gap: spacing.xs }}>
+          <AppText variant="display" accessibilityRole="header">
+            {firstName ? `Welcome, ${firstName}` : 'Welcome'}
+          </AppText>
+          <AppText color="textMuted">
+            Tell the centre a little about you. It takes a few seconds, and you only do it once.
+          </AppText>
+        </View>
+      </View>
       <ProfileForm
         submitLabel="Start learning"
+        emphasis="accent"
         initialValues={{
           fullName: profile.data.full_name ?? '',
           phone: profile.data.phone ?? '',

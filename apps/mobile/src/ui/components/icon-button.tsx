@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet } from 'react-native';
 
-import { radius, type ThemeColors } from '../theme';
+import { radius, useTheme, type ColorName } from '../theme';
 import { Icon, type IconName } from './icon';
 
 export interface IconButtonProps {
@@ -8,8 +8,10 @@ export interface IconButtonProps {
   /** Read out by screen readers; icon-only buttons must say what they do. */
   label: string;
   onPress: () => void;
-  color?: keyof ThemeColors;
+  color?: ColorName;
   disabled?: boolean;
+  /** A soft tile behind the icon, for buttons that stand alone rather than in a row of tools. */
+  tonal?: boolean;
 }
 
 export function IconButton({
@@ -18,7 +20,9 @@ export function IconButton({
   onPress,
   color = 'textMuted',
   disabled,
+  tonal,
 }: IconButtonProps) {
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -27,7 +31,12 @@ export function IconButton({
       disabled={disabled}
       hitSlop={6}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, { opacity: disabled ? 0.3 : pressed ? 0.6 : 1 }]}>
+      android_ripple={{ color: colors.surfaceMuted, borderless: true, radius: 22 }}
+      style={({ pressed }) => [
+        styles.button,
+        tonal ? { backgroundColor: colors.surfaceMuted } : null,
+        { opacity: disabled ? 0.3 : pressed ? 0.6 : 1 },
+      ]}>
       <Icon name={icon} color={color} size={22} />
     </Pressable>
   );

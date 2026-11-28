@@ -1,16 +1,28 @@
-// The design system. Screens import from '@/ui' only.
+// The design system. Screens import from '@/ui' only. docs/architecture/design-system.md
+// explains the tokens and when to use which component.
 export * from './theme';
 export * from './components/app-text';
+export * from './components/avatar';
 export * from './components/badge';
+export * from './components/brand';
 export * from './components/button';
 export * from './components/card';
+export * from './components/date-time-field';
 export * from './components/form-text-field';
 export * from './components/icon';
 export * from './components/icon-button';
 export * from './components/icon-chip';
+export * from './components/key';
+export * from './components/key-cap';
+export * from './components/list-group';
 export * from './components/list-row';
+export * from './components/notice';
+export * from './components/progress-bar';
 export * from './components/screen';
 export * from './components/section-header';
+export * from './components/segmented-control';
+export * from './components/sheet';
+export * from './components/stat';
 export * from './components/state-views';
 export * from './components/switch-row';
 export * from './components/text-field';

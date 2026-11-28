@@ -11,6 +11,7 @@ import {
   Card,
   EmptyState,
   ErrorState,
+  Icon,
   LoadingState,
   Screen,
   spacing,
@@ -59,7 +60,7 @@ export function BannersScreen() {
   return (
     <Screen edges={[]}>
       <AppText color="textMuted">
-        Pictures that slide at the top of the Home screen. Tapping one can open a course.
+        Pictures that slide on the Home screen. Tapping one can open a course.
       </AppText>
       <Button
         label="Add banner"
@@ -68,22 +69,29 @@ export function BannersScreen() {
         onPress={() => void add()}
       />
       {list.length === 0 ? (
-        <EmptyState icon="image-multiple-outline" title="No banners yet" />
+        <EmptyState
+          icon="image-multiple-outline"
+          title="No banners yet"
+          message="Add a picture to show on students’ Home screen. A 16:9 picture fits best."
+        />
       ) : null}
       {list.map((banner, index) => (
         <Card key={banner.id}>
           <View style={styles.body}>
-            <Thumbnail uri={banner.imageUrl} />
+            <Thumbnail uri={banner.imageUrl} accessibilityLabel={`Banner ${index + 1}`} />
             <SwitchRow
               label="Show on Home"
               value={banner.isActive}
               onValueChange={(isActive) => actions.update.mutate({ id: banner.id, isActive })}
             />
-            <AppText variant="caption" color="textMuted">
-              {banner.courseId
-                ? `Opens: ${courseTitle(banner.courseId) ?? 'a course'}`
-                : 'Does not open a course'}
-            </AppText>
+            <View style={styles.link}>
+              <Icon name="link-variant" size={18} color="textMuted" />
+              <AppText variant="caption" color="textMuted" style={styles.grow}>
+                {banner.courseId
+                  ? `Opens: ${courseTitle(banner.courseId) ?? 'a course'}`
+                  : 'Does not open a course'}
+              </AppText>
+            </View>
             <View style={styles.row}>
               <Button
                 label="Link to a course"
@@ -99,18 +107,20 @@ export function BannersScreen() {
                   onPress={() => actions.update.mutate({ id: banner.id, courseId: null })}
                 />
               ) : null}
-              <View style={styles.spacer} />
-              <ReorderControls
-                itemLabel={`banner ${index + 1}`}
-                index={index}
-                count={list.length}
-                disabled={actions.reorder.isPending}
-                onMove={(from, to) =>
-                  actions.reorder.mutate(moveItem(list, from, to).map((b) => b.id))
-                }
-                onRemove={() => void remove(banner)}
-                removeLabel="Delete"
-              />
+              {/* Kept to the right edge, also when a narrow phone moves it to its own line. */}
+              <View style={styles.order}>
+                <ReorderControls
+                  itemLabel={`banner ${index + 1}`}
+                  index={index}
+                  count={list.length}
+                  disabled={actions.reorder.isPending}
+                  onMove={(from, to) =>
+                    actions.reorder.mutate(moveItem(list, from, to).map((b) => b.id))
+                  }
+                  onRemove={() => void remove(banner)}
+                  removeLabel="Delete"
+                />
+              </View>
             </View>
           </View>
         </Card>
@@ -129,6 +139,8 @@ export function BannersScreen() {
 
 const styles = StyleSheet.create({
   body: { gap: spacing.md },
+  link: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  grow: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
-  spacer: { flex: 1 },
+  order: { marginLeft: 'auto' },
 });

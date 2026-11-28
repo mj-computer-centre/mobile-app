@@ -1,10 +1,10 @@
 import { Text, type TextProps } from 'react-native';
 
-import { typography, useTheme, type ThemeColors, type TypographyVariant } from '../theme';
+import { typography, useTheme, type ColorName, type TypographyVariant } from '../theme';
 
 export interface AppTextProps extends TextProps {
   variant?: TypographyVariant;
-  color?: keyof ThemeColors;
+  color?: ColorName;
 }
 
 export function AppText({ variant = 'body', color = 'text', style, ...props }: AppTextProps) {

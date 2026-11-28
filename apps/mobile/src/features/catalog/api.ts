@@ -1,4 +1,5 @@
 import {
+  IMAGE_WIDTHS,
   notesLessonIds,
   toCourseDetail,
   toCourseSummary,
@@ -71,7 +72,7 @@ export async function fetchActiveBanners(): Promise<Banner[]> {
   const urls = fileUrls();
   return rows.map((row) => ({
     id: row.id,
-    imageUrl: urls.mediaUrl(row.image_path),
+    imageUrl: urls.mediaUrl(row.image_path, IMAGE_WIDTHS.banner),
     courseId: row.course_id,
   }));
 }

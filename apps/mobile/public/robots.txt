@@ -1,0 +1,6 @@
+# The public pages (home, courses, tests, contact, privacy policy) may be indexed. The admin
+# panel is behind sign-in and has nothing for a search engine.
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /manage/

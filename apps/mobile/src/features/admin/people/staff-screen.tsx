@@ -1,26 +1,36 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { staffInviteSchema, toAppError, type StaffInviteValues } from '@mcc/shared';
 import { Controller, useForm } from 'react-hook-form';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useStaffRole, useUserId } from '@/features/auth';
 import { confirmAction, showMessage } from '@/lib/platform/confirm';
 import {
   AppText,
+  Avatar,
   Badge,
   Button,
   EmptyState,
   ErrorState,
   FormTextField,
   IconButton,
+  ListGroup,
   ListRow,
-  LoadingState,
   Screen,
+  SegmentedControl,
+  SkeletonRows,
   spacing,
+  type Segment,
 } from '@/ui';
 
 import { AdminSection } from '../shared/admin-section';
+import { ErrorNotice } from '../shared/error-notice';
 import { useStaffActions, useStaffList } from './hooks';
+
+const ROLES: readonly Segment<StaffInviteValues['role']>[] = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'owner', label: 'Owner' },
+];
 
 /** Owner only: who can manage content. The database enforces the same rule. */
 export function StaffScreen() {
@@ -35,7 +45,13 @@ export function StaffScreen() {
 
   if (role !== 'owner')
     return <EmptyState icon="lock-outline" title="Only the owner can manage staff" />;
-  if (staff.isPending) return <LoadingState />;
+  if (staff.isPending) {
+    return (
+      <Screen edges={[]}>
+        <SkeletonRows />
+      </Screen>
+    );
+  }
   if (staff.isError) return <ErrorState error={staff.error} onRetry={() => void staff.refetch()} />;
 
   const confirmRemove = async (userId: string, name: string) => {
@@ -53,39 +69,46 @@ export function StaffScreen() {
 
   return (
     <Screen edges={[]}>
-      <AdminSection title="Staff" padded={false}>
-        {staff.data.map((member) => {
-          const name = member.full_name || member.email || 'Staff member';
-          return (
-            <ListRow
-              key={member.user_id ?? name}
-              title={member.user_id === myId ? `${name} (you)` : name}
-              subtitle={member.email ?? undefined}
-              trailing={
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                  <Badge
-                    label={member.role === 'owner' ? 'Owner' : 'Admin'}
-                    tone={member.role === 'owner' ? 'primary' : 'neutral'}
-                  />
-                  {member.user_id && member.user_id !== myId ? (
-                    <IconButton
-                      icon="account-remove-outline"
-                      label={`Remove ${name}`}
-                      color="danger"
-                      onPress={() => void confirmRemove(member.user_id as string, name)}
-                    />
-                  ) : null}
-                </View>
-              }
-            />
-          );
-        })}
+      <AdminSection title="Who can manage the app" bare>
+        <ListGroup>
+          {staff.data.map((member) => {
+            const name = member.full_name || member.email || 'Staff member';
+            const removable = Boolean(member.user_id) && member.user_id !== myId;
+            return (
+              <ListRow
+                key={member.user_id ?? name}
+                title={member.user_id === myId ? `${name} (you)` : name}
+                subtitle={member.email ?? undefined}
+                leading={<Avatar name={name} />}
+                trailing={
+                  <View style={[styles.trailing, !removable && styles.badgeOnly]}>
+                    {/* Wrapped: a badge alone would sit at the top of the row, not its middle. */}
+                    <View>
+                      <Badge
+                        label={member.role === 'owner' ? 'Owner' : 'Admin'}
+                        tone={member.role === 'owner' ? 'primary' : 'neutral'}
+                      />
+                    </View>
+                    {removable ? (
+                      <IconButton
+                        icon="account-remove-outline"
+                        label={`Remove ${name}`}
+                        color="danger"
+                        onPress={() => void confirmRemove(member.user_id as string, name)}
+                      />
+                    ) : null}
+                  </View>
+                }
+              />
+            );
+          })}
+        </ListGroup>
       </AdminSection>
 
       <AdminSection
         title="Add a staff member"
         description="They must sign in to the app once with this Gmail address first.">
-        <View style={{ gap: spacing.lg }}>
+        <View style={styles.form}>
           <FormTextField
             control={control}
             name="email"
@@ -98,27 +121,22 @@ export function StaffScreen() {
             control={control}
             name="role"
             render={({ field }) => (
-              <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-                <Button
-                  label="Admin"
-                  compact
-                  variant={field.value === 'admin' ? 'primary' : 'secondary'}
-                  onPress={() => field.onChange('admin')}
+              <View style={styles.role}>
+                <AppText variant="label">What they can do</AppText>
+                <SegmentedControl
+                  accessibilityLabel="What they can do"
+                  segments={ROLES}
+                  value={field.value}
+                  onChange={field.onChange}
                 />
-                <Button
-                  label="Owner"
-                  compact
-                  variant={field.value === 'owner' ? 'primary' : 'secondary'}
-                  onPress={() => field.onChange('owner')}
-                />
+                <AppText variant="caption" color="textMuted">
+                  Admins manage courses, units, lessons, tests, banners and the centre’s details.
+                  Owners can also manage staff.
+                </AppText>
               </View>
             )}
           />
-          <AppText variant="caption" color="textMuted">
-            Admins manage courses, units, lessons, banners and contact details. Owners can also
-            manage staff.
-          </AppText>
-          {add.isError ? <AppText color="danger">{toAppError(add.error).message}</AppText> : null}
+          <ErrorNotice error={add.error} />
           <Button
             label="Add staff member"
             icon="account-plus-outline"
@@ -132,3 +150,11 @@ export function StaffScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  trailing: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  // Without a button after it, the badge keeps the same distance from the edge as the row's text.
+  badgeOnly: { paddingRight: spacing.sm },
+  form: { gap: spacing.lg },
+  role: { gap: spacing.sm },
+});

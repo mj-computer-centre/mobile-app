@@ -1,17 +1,19 @@
 import { formatDuration, formatFileSize, type Lesson } from '@mcc/shared';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, type PressableStateCallbackType } from 'react-native';
 
-import { Icon, ListRow, spacing, Thumbnail } from '@/ui';
+import { AppText, Badge, IconChip, spacing, Thumbnail, useTheme } from '@/ui';
 
-function subtitle(lesson: Lesson): string {
+const THUMBNAIL_WIDTH = 104;
+
+function describe(lesson: Lesson): string {
   if (lesson.kind === 'pdf')
     return lesson.sizeBytes ? `PDF notes · ${formatFileSize(lesson.sizeBytes)}` : 'PDF notes';
-  const parts = ['Video'];
-  if (lesson.durationSeconds) parts.push(formatDuration(lesson.durationSeconds));
-  if (lesson.notes) parts.push('with notes');
-  return parts.join(' · ');
+  return lesson.notes ? 'Video · with notes' : 'Video';
 }
 
+type RowState = PressableStateCallbackType & { hovered?: boolean };
+
+/** One lesson in a unit: a video with its thumbnail and length, or a PDF. */
 export function LessonRow({
   lesson,
   onPress,
@@ -19,28 +21,56 @@ export function LessonRow({
 }: {
   lesson: Lesson;
   onPress: () => void;
+  /** The lesson playing now, in the list under the player. */
   active?: boolean;
 }) {
-  const leading =
-    lesson.kind === 'video' ? (
-      <Thumbnail uri={lesson.thumbnailUrl} width={96} fallbackIcon="play-circle-outline" />
-    ) : (
-      <View style={styles.pdfIcon}>
-        <Icon name="file-pdf-box" size={32} color="danger" />
-      </View>
-    );
-
+  const { colors } = useTheme();
   return (
-    <ListRow
-      title={lesson.title}
-      subtitle={active ? `Now playing · ${subtitle(lesson)}` : subtitle(lesson)}
-      leading={leading}
-      onPress={onPress}
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${lesson.title}, ${describe(lesson)}${active ? ', playing now' : ''}`}
       accessibilityHint={lesson.kind === 'video' ? 'Plays the video' : 'Opens the notes'}
-    />
+      accessibilityState={{ selected: Boolean(active) }}
+      onPress={onPress}
+      android_ripple={{ color: colors.surfaceMuted }}
+      style={(state: RowState) => [
+        styles.row,
+        active && { backgroundColor: colors.primarySoft },
+        !active && (state.pressed || state.hovered) && { backgroundColor: colors.surfaceMuted },
+      ]}>
+      {lesson.kind === 'video' ? (
+        <Thumbnail
+          uri={lesson.thumbnailUrl}
+          width={THUMBNAIL_WIDTH}
+          fallbackIcon="play-circle-outline"
+          caption={lesson.durationSeconds ? formatDuration(lesson.durationSeconds) : undefined}
+        />
+      ) : (
+        <View style={styles.pdf}>
+          <IconChip name="file-document-outline" tone="danger" size={44} />
+        </View>
+      )}
+      <View style={styles.text}>
+        <AppText variant="bodyStrong" numberOfLines={2}>
+          {lesson.title}
+        </AppText>
+        <AppText variant="caption" color="textMuted" numberOfLines={1}>
+          {describe(lesson)}
+        </AppText>
+        {active ? <Badge label="Playing now" tone="primary" icon="play" /> : null}
+      </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  pdfIcon: { width: 96, alignItems: 'center', paddingVertical: spacing.sm },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  pdf: { width: THUMBNAIL_WIDTH, alignItems: 'center' },
+  text: { flex: 1, gap: 3 },
 });

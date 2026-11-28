@@ -1,15 +1,18 @@
 import { discountPercent, formatInr } from '@mcc/shared';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, spacing } from '@/ui';
+import { AppText, Badge, spacing } from '@/ui';
 
-/** "₹0  ₹14,999  100% OFF" — the free-now price with the original crossed out. */
+/** "₹0  ₹14,999  100% OFF": the price now, the original crossed out, and the saving. */
 export function PriceTag({
   pricePaise,
   originalPricePaise,
+  large = false,
 }: {
   pricePaise: number;
   originalPricePaise: number | null;
+  /** Bigger figures, for the course page. */
+  large?: boolean;
 }) {
   const discount = discountPercent(originalPricePaise, pricePaise);
   const label =
@@ -19,15 +22,13 @@ export function PriceTag({
 
   return (
     <View style={styles.row} accessible accessibilityLabel={label}>
-      <AppText variant="label">{formatInr(pricePaise)}</AppText>
+      <AppText variant={large ? 'title' : 'subheading'}>{formatInr(pricePaise)}</AppText>
       {discount !== null && originalPricePaise !== null ? (
         <>
-          <AppText variant="caption" color="textMuted" style={styles.strike}>
+          <AppText variant={large ? 'body' : 'caption'} color="textMuted" style={styles.strike}>
             {formatInr(originalPricePaise)}
           </AppText>
-          <AppText variant="caption" color="success" style={styles.bold}>
-            {discount}% OFF
-          </AppText>
+          <Badge label={`${discount}% OFF`} tone="success" />
         </>
       ) : null}
     </View>
@@ -35,7 +36,6 @@ export function PriceTag({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm, flexWrap: 'wrap' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
   strike: { textDecorationLine: 'line-through' },
-  bold: { fontWeight: '700' },
 });

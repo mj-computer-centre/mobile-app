@@ -4,7 +4,19 @@ import { StyleSheet, View } from 'react-native';
 
 import { useCourseDetail, LessonRow } from '@/features/catalog';
 import { routes } from '@/lib/routes';
-import { AppText, Button, Card, EmptyState, ErrorState, LoadingState, Screen, spacing } from '@/ui';
+import {
+  AppText,
+  Button,
+  Divider,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  radius,
+  Screen,
+  spacing,
+  useLayout,
+  useTheme,
+} from '@/ui';
 
 import { LessonPlayer } from '../lesson-player';
 
@@ -16,6 +28,8 @@ export interface LessonScreenProps {
 
 export function LessonScreen({ courseId, lessonId, sectionId }: LessonScreenProps) {
   const course = useCourseDetail(courseId);
+  const { isWide } = useLayout();
+  const { colors } = useTheme();
 
   if (course.isPending) return <LoadingState />;
   if (course.isError)
@@ -27,6 +41,7 @@ export function LessonScreen({ courseId, lessonId, sectionId }: LessonScreenProp
       <EmptyState
         icon="video-off-outline"
         title="This lesson is no longer available"
+        message="The centre may have moved or removed it."
         action={{
           label: 'Back to the course',
           onPress: () => router.replace(routes.course(courseId)),
@@ -48,62 +63,100 @@ export function LessonScreen({ courseId, lessonId, sectionId }: LessonScreenProp
         : routes.notes(courseId, item.id),
     );
 
-  return (
-    <Screen edges={[]} padded={false}>
-      <Stack.Screen options={{ title: unit.label }} />
-      <LessonPlayer
-        videoId={lesson.youtubeVideoId}
-        endOverlay={
-          nextVideo && playNext ? (
-            <View style={styles.overlay}>
-              <AppText variant="caption" color="textMuted">
-                Up next
-              </AppText>
-              <AppText variant="label" numberOfLines={2} style={styles.centre}>
-                {nextVideo.title}
-              </AppText>
-              <Button label="Play next" icon="skip-next" compact onPress={playNext} />
-            </View>
-          ) : (
-            <AppText variant="label">You have finished this course’s videos.</AppText>
-          )
-        }
-      />
-
-      <View style={styles.body}>
-        <AppText variant="heading">{lesson.title}</AppText>
-        {lesson.durationSeconds ? (
-          <AppText variant="caption" color="textMuted">
-            {formatDuration(lesson.durationSeconds)}
+  const player = (
+    <LessonPlayer
+      videoId={lesson.youtubeVideoId}
+      endOverlay={
+        nextVideo && playNext ? (
+          <View style={styles.overlay}>
+            <AppText variant="caption" color="onHeroMuted">
+              Up next
+            </AppText>
+            <AppText variant="subheading" color="onHero" numberOfLines={2} style={styles.centre}>
+              {nextVideo.title}
+            </AppText>
+            <Button
+              label="Play next"
+              icon="skip-next"
+              variant="accent"
+              compact
+              onPress={playNext}
+            />
+          </View>
+        ) : (
+          <AppText variant="subheading" color="onHero" style={styles.centre}>
+            You have finished this course’s videos.
           </AppText>
-        ) : null}
-
+        )
+      }
+    />
+  );
+  const details = (
+    <View style={styles.details}>
+      <View style={styles.titles}>
+        <AppText variant="title" accessibilityRole="header">
+          {lesson.title}
+        </AppText>
+        <AppText variant="caption" color="textMuted">
+          {[unit.label, lesson.durationSeconds ? formatDuration(lesson.durationSeconds) : null]
+            .filter(Boolean)
+            .join(' · ')}
+        </AppText>
+      </View>
+      {playNext || notes ? (
         <View style={styles.actions}>
+          {playNext ? (
+            <Button label="Next video" icon="skip-next" onPress={playNext} style={styles.action} />
+          ) : null}
           {notes ? (
             <Button
               label="Open notes"
-              icon="file-pdf-box"
+              icon="file-document-outline"
               variant="secondary"
               onPress={() => router.push(routes.notes(courseId, notes.id))}
+              style={styles.action}
             />
-          ) : null}
-          {playNext ? (
-            <Button label="Next video" icon="skip-next" variant="secondary" onPress={playNext} />
           ) : null}
         </View>
-
-        <AppText variant="heading">{unit.label}</AppText>
-        <Card padded={false}>
-          {unit.lessons.map((item) => (
-            <LessonRow
-              key={item.id}
-              lesson={item}
-              active={item.id === lesson.id}
-              onPress={() => open(item)}
-            />
-          ))}
-        </Card>
+      ) : null}
+    </View>
+  );
+  const playlist = (
+    <View style={styles.playlist}>
+      <AppText variant="heading" accessibilityRole="header">
+        {unit.label}
+      </AppText>
+      <View style={[styles.list, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        {unit.lessons.map((item, index) => (
+          <View key={item.id}>
+            {index > 0 ? <Divider inset={0} /> : null}
+            <LessonRow lesson={item} active={item.id === lesson.id} onPress={() => open(item)} />
+          </View>
+        ))}
       </View>
+    </View>
+  );
+
+  return (
+    <Screen edges={[]} padded={isWide} width="wide">
+      <Stack.Screen options={{ title: unit.label }} />
+      {isWide ? (
+        <View style={styles.columns}>
+          <View style={styles.main}>
+            <View style={styles.rounded}>{player}</View>
+            {details}
+          </View>
+          <View style={styles.side}>{playlist}</View>
+        </View>
+      ) : (
+        <>
+          {player}
+          <View style={styles.body}>
+            {details}
+            {playlist}
+          </View>
+        </>
+      )}
     </Screen>
   );
 }
@@ -111,6 +164,15 @@ export function LessonScreen({ courseId, lessonId, sectionId }: LessonScreenProp
 const styles = StyleSheet.create({
   overlay: { alignItems: 'center', gap: spacing.sm },
   centre: { textAlign: 'center' },
-  body: { padding: spacing.lg, gap: spacing.md },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  body: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.xl },
+  details: { gap: spacing.lg },
+  titles: { gap: spacing.xs },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  action: { flexGrow: 1, flexBasis: 150 },
+  playlist: { gap: spacing.md },
+  list: { borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xxl },
+  main: { flex: 3, minWidth: 0, gap: spacing.xl },
+  side: { flex: 2, minWidth: 0, maxWidth: 420 },
+  rounded: { borderRadius: radius.lg, overflow: 'hidden' },
 });

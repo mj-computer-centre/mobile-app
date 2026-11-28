@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { sectionFormSchema, toAppError, type SectionFormValues } from '@mcc/shared';
+import { sectionFormSchema, type SectionFormValues } from '@mcc/shared';
 import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
 
-import { AppText, Button, FormTextField, spacing } from '@/ui';
+import { Button, FormTextField, spacing } from '@/ui';
 
+import { ErrorNotice } from '../../shared/error-notice';
 import { useUpdateSection } from '../hooks';
 
 export function SectionDetailsForm({
@@ -29,7 +30,7 @@ export function SectionDetailsForm({
         label="Description (optional)"
         multiline
       />
-      {update.isError ? <AppText color="danger">{toAppError(update.error).message}</AppText> : null}
+      <ErrorNotice error={update.error} />
       <Button
         label="Save changes"
         loading={update.isPending}

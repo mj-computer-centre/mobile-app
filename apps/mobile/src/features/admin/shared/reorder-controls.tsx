@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { IconButton } from '@/ui';
+import { IconButton, spacing } from '@/ui';
 
 export interface ReorderControlsProps {
   /** What is being moved, for screen readers ("Move MS Word up"). */
@@ -15,7 +15,7 @@ export interface ReorderControlsProps {
 
 /**
  * Up / down / remove buttons. Arrows instead of drag-and-drop: they work the same on phones and
- * on the web admin, and are easy for screen-reader users.
+ * on the website, and are easy for screen-reader users.
  */
 export function ReorderControls({
   itemLabel,
@@ -41,13 +41,16 @@ export function ReorderControls({
         onPress={() => onMove(index, index + 1)}
       />
       {onRemove ? (
-        <IconButton
-          icon="close"
-          label={`${removeLabel} ${itemLabel}`}
-          color="danger"
-          disabled={disabled}
-          onPress={onRemove}
-        />
+        // Set a little apart, so a thumb aiming for the down arrow does not land on Remove.
+        <View style={styles.remove}>
+          <IconButton
+            icon="close"
+            label={`${removeLabel} ${itemLabel}`}
+            color="danger"
+            disabled={disabled}
+            onPress={onRemove}
+          />
+        </View>
       ) : null}
     </View>
   );
@@ -55,4 +58,5 @@ export function ReorderControls({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
+  remove: { marginLeft: spacing.xs },
 });

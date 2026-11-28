@@ -8,8 +8,8 @@ import { routes } from '@/lib/routes';
 import { radius, spacing, useLayout } from '@/ui';
 
 /**
- * Swipeable banners at the top of Home. A banner linked to a course opens it. Each banner is as
- * wide as the page on a phone; on a wide screen two sit side by side.
+ * Swipeable banners on Home. A banner linked to a course opens it. Each banner is as wide as
+ * the page on a phone; on a wide screen two sit side by side.
  */
 export function BannerCarousel({ banners }: { banners: Banner[] }) {
   const { isWide } = useLayout();
@@ -37,11 +37,13 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
                   courseId ? `Banner ${index + 1}, opens a course` : `Banner ${index + 1}`
                 }
                 disabled={!courseId}
-                onPress={() => courseId && router.push(routes.course(courseId))}>
+                onPress={() => courseId && router.push(routes.course(courseId))}
+                style={({ pressed }) => pressed && styles.pressed}>
                 <Image
                   source={{ uri: banner.imageUrl }}
                   style={[styles.image, { width: itemWidth }]}
                   contentFit="cover"
+                  transition={150}
                 />
               </Pressable>
             );
@@ -58,4 +60,5 @@ const styles = StyleSheet.create({
   strip: { flexGrow: 0 },
   row: { gap: spacing.md, alignItems: 'flex-start' },
   image: { aspectRatio: 16 / 9, borderRadius: radius.lg },
+  pressed: { opacity: 0.85 },
 });

@@ -1,17 +1,7 @@
 import { useState } from 'react';
-import { FlatList, Modal, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, StyleSheet } from 'react-native';
 
-import {
-  AppText,
-  Button,
-  EmptyState,
-  ListRow,
-  LoadingState,
-  spacing,
-  TextField,
-  useTheme,
-} from '@/ui';
+import { Divider, EmptyState, ListRow, Sheet, SkeletonRows, spacing, TextField } from '@/ui';
 
 export interface PickableItem {
   id: string;
@@ -22,6 +12,7 @@ export interface PickableItem {
 export interface PickFromListModalProps {
   visible: boolean;
   title: string;
+  /** Undefined while the list is loading. */
   items: PickableItem[] | undefined;
   emptyMessage: string;
   onPick: (id: string) => void;
@@ -37,7 +28,6 @@ export function PickFromListModal({
   onPick,
   onClose,
 }: PickFromListModalProps) {
-  const { colors } = useTheme();
   const [search, setSearch] = useState('');
   const needle = search.trim().toLowerCase();
   const filtered = items?.filter(
@@ -48,49 +38,37 @@ export function PickFromListModal({
   );
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}>
-      <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
-        <View style={styles.header}>
-          <AppText variant="heading" style={styles.title}>
-            {title}
-          </AppText>
-          <Button label="Close" variant="ghost" compact onPress={onClose} />
-        </View>
-        <View style={styles.search}>
-          <TextField label="Search" value={search} onChangeText={setSearch} autoCorrect={false} />
-        </View>
-        {!filtered ? (
-          <LoadingState />
-        ) : filtered.length === 0 ? (
-          <EmptyState icon="magnify" title={needle ? 'Nothing matches' : emptyMessage} />
-        ) : (
-          <FlatList
-            data={filtered}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <ListRow
-                title={item.title}
-                subtitle={item.subtitle}
-                onPress={() => {
-                  onPick(item.id);
-                  onClose();
-                }}
-              />
-            )}
-          />
-        )}
-      </SafeAreaView>
-    </Modal>
+    <Sheet visible={visible} onClose={onClose} title={title} tall>
+      <TextField label="Search" value={search} onChangeText={setSearch} autoCorrect={false} />
+      {!filtered ? (
+        <SkeletonRows count={4} />
+      ) : filtered.length === 0 ? (
+        <EmptyState icon="magnify" title={needle ? 'Nothing matches' : emptyMessage} />
+      ) : (
+        <FlatList
+          style={styles.list}
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          // A tap on a row picks it even while the keyboard is up from searching.
+          keyboardShouldPersistTaps="handled"
+          ItemSeparatorComponent={Divider}
+          renderItem={({ item }) => (
+            <ListRow
+              title={item.title}
+              subtitle={item.subtitle}
+              onPress={() => {
+                onPick(item.id);
+                onClose();
+              }}
+            />
+          )}
+        />
+      )}
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', padding: spacing.lg, gap: spacing.md },
-  title: { flex: 1 },
-  search: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
+  // Rows carry their own side padding, so the list reaches the sheet's edges.
+  list: { flex: 1, marginHorizontal: -spacing.lg },
 });

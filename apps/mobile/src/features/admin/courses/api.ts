@@ -1,18 +1,20 @@
 import {
-  BUCKETS,
-  LIMITS,
   courseFormToRow,
-  courseImagePath,
+  courseImageRequestSchema,
+  courseImageResponseSchema,
   type CourseFormValues,
+  type CourseImageRequest,
   type SectionFormValues,
   type TableRow,
 } from '@mcc/shared';
 
-import { run, runVoid } from '@/lib/data';
-import { fileExtension, type PickedFile } from '@/lib/platform/picked-file';
+import { demoCoverPicture } from '@/dev/demo-covers';
+import { invokeFunction, run, runVoid } from '@/lib/data';
+import { devBypass } from '@/lib/dev-bypass';
+import type { PickedFile } from '@/lib/platform/picked-file';
 import { supabase } from '@/lib/supabase';
 
-import { removeFiles, uploadFile } from '../shared/uploads';
+import { removeImages, storeImage } from '../shared/uploads';
 
 export type CourseRecord = TableRow<'courses'>;
 
@@ -42,18 +44,75 @@ export async function deleteCourse(
   course: Pick<CourseRecord, 'id' | 'thumbnail_path'>,
 ): Promise<void> {
   await runVoid(supabase().from('courses').delete().eq('id', course.id));
-  if (course.thumbnail_path) await removeFiles(BUCKETS.media, [course.thumbnail_path]);
+  await removeImages([course.thumbnail_path]);
 }
 
-/** Uploads a new cover picture, points the course at it, then removes the old one. */
+/**
+ * Stores a new cover picture, points the course at it, then removes the old one. The picture
+ * is one the admin uploaded or one drawn by AI: both arrive as a picked file.
+ */
 export async function replaceCourseImage(
   course: Pick<CourseRecord, 'id' | 'thumbnail_path'>,
   file: PickedFile,
-) {
-  const path = courseImagePath(course.id, `${Date.now()}.${fileExtension(file)}`);
-  await uploadFile(BUCKETS.media, path, file, LIMITS.imageBytes);
-  await runVoid(supabase().from('courses').update({ thumbnail_path: path }).eq('id', course.id));
-  if (course.thumbnail_path) await removeFiles(BUCKETS.media, [course.thumbnail_path]);
+): Promise<void> {
+  const url = await storeImage('course', file);
+  try {
+    await runVoid(supabase().from('courses').update({ thumbnail_path: url }).eq('id', course.id));
+  } catch (error) {
+    await removeImages([url]);
+    throw error;
+  }
+  await removeImages([course.thumbnail_path]);
+}
+
+/** Takes the cover picture off the course: students see its coloured panel again. */
+export async function clearCourseImage(
+  course: Pick<CourseRecord, 'id' | 'thumbnail_path'>,
+): Promise<void> {
+  await runVoid(supabase().from('courses').update({ thumbnail_path: null }).eq('id', course.id));
+  await removeImages([course.thumbnail_path]);
+}
+
+/**
+ * One AI picture for a course's cover, as a data URL. Nothing is stored: the picture the admin
+ * chooses is saved like an uploaded one. The dev bypass has no functions to call, so it gets a
+ * stand-in drawing.
+ */
+export async function drawCoverPicture(request: CourseImageRequest): Promise<string> {
+  const body = courseImageRequestSchema.parse(request);
+  if (devBypass) return demoCoverPicture(body.view);
+  const { image } = await invokeFunction(
+    'course-image',
+    body,
+    courseImageResponseSchema,
+    'ai_images_not_set_up',
+  );
+  return image;
+}
+
+export interface CreatedCourse {
+  courseId: string;
+  /** False when the course was created but its cover picture could not be stored. */
+  coverSaved: boolean;
+}
+
+/**
+ * Creates the course and then stores the cover chosen with it. The picture comes second because
+ * it needs the course to exist; when it fails the course stays, and the admin adds the picture
+ * again from the course's page.
+ */
+export async function createCourseWithCover(
+  values: CourseFormValues,
+  cover: PickedFile | null,
+): Promise<CreatedCourse> {
+  const courseId = await createCourse(values);
+  if (!cover) return { courseId, coverSaved: true };
+  try {
+    await replaceCourseImage({ id: courseId, thumbnail_path: null }, cover);
+    return { courseId, coverSaved: true };
+  } catch {
+    return { courseId, coverSaved: false };
+  }
 }
 
 /** Saves the order of the course list (index = position). */

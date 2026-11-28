@@ -1,11 +1,12 @@
-import { formatFileSize, toAppError } from '@mcc/shared';
+import { formatFileSize } from '@mcc/shared';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { pickPdf, type PickedFile } from '@/lib/platform/picked-file';
-import { AppText, Button, spacing, TextField } from '@/ui';
+import { AppText, Button, Icon, spacing, TextField } from '@/ui';
 
 import { useCreatePdfLesson } from '../../lessons/hooks';
+import { ErrorNotice } from '../../shared/error-notice';
 import { useSectionLessons } from '../hooks';
 
 function titleFromFileName(name: string): string {
@@ -42,7 +43,7 @@ export function AddPdfPanel({ sectionId }: { sectionId: string }) {
   };
 
   return (
-    <View style={{ gap: spacing.md }}>
+    <View style={styles.panel}>
       <Button
         label={file ? 'Choose a different PDF' : 'Choose PDF'}
         icon="file-pdf-box"
@@ -51,10 +52,12 @@ export function AddPdfPanel({ sectionId }: { sectionId: string }) {
       />
       {file ? (
         <>
-          <AppText variant="caption" color="textMuted">
-            {file.name}
-            {file.sizeBytes ? ` · ${formatFileSize(file.sizeBytes)}` : ''}
-          </AppText>
+          <View style={styles.file}>
+            <Icon name="file-document-outline" size={20} color="textMuted" />
+            <AppText variant="caption" color="textMuted" numberOfLines={2} style={styles.fileName}>
+              {file.sizeBytes ? `${file.name} · ${formatFileSize(file.sizeBytes)}` : file.name}
+            </AppText>
+          </View>
           <TextField label="Title students will see" value={title} onChangeText={setTitle} />
           <Button
             label="Upload to this unit"
@@ -65,11 +68,13 @@ export function AddPdfPanel({ sectionId }: { sectionId: string }) {
           />
         </>
       ) : null}
-      {error ? (
-        <AppText color="danger" accessibilityLiveRegion="polite">
-          {toAppError(error).message}
-        </AppText>
-      ) : null}
+      <ErrorNotice error={error} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  panel: { gap: spacing.md },
+  file: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  fileName: { flex: 1 },
+});

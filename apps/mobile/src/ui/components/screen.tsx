@@ -15,9 +15,13 @@ export interface ScreenProps {
   padded?: boolean;
   /**
    * `narrow` (default) keeps forms and reading pages at a comfortable line length; `wide` lets
-   * card grids and dashboards use more of a desktop screen.
+   * grids and dashboards use more of a desktop screen.
    */
   width?: 'narrow' | 'wide';
+  /** Full-width content after the page, inside the scroll: the public website's footer. */
+  footer?: ReactNode;
+  /** Pinned under the content, outside the scroll: a test's Next and Submit bar. */
+  bottomBar?: ReactNode;
 }
 
 export function Screen({
@@ -28,6 +32,8 @@ export function Screen({
   onRefresh,
   padded = true,
   width = 'narrow',
+  footer,
+  bottomBar,
 }: ScreenProps) {
   const { colors } = useTheme();
   const { isWide } = useLayout();
@@ -51,14 +57,21 @@ export function Screen({
           keyboardShouldPersistTaps="handled"
           refreshControl={
             onRefresh ? (
-              <RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} />
+              <RefreshControl
+                refreshing={Boolean(refreshing)}
+                onRefresh={onRefresh}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
+              />
             ) : undefined
           }>
           {inner}
+          {footer}
         </ScrollView>
       ) : (
         inner
       )}
+      {bottomBar}
     </SafeAreaView>
   );
 }
@@ -70,9 +83,14 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     alignSelf: 'center',
-    gap: spacing.lg,
+    // Sections of a page sit this far apart; rows inside a section sit closer (spacing.md).
+    gap: spacing.xl,
   },
-  padded: { padding: spacing.lg },
-  paddedWide: { paddingHorizontal: spacing.xxl, paddingVertical: spacing.xl + spacing.xs },
-  gapWide: { gap: spacing.xl },
+  padded: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  paddedWide: {
+    paddingHorizontal: spacing.xxl,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.xxxl,
+  },
+  gapWide: { gap: spacing.xxl },
 });

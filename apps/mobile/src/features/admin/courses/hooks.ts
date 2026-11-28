@@ -6,7 +6,8 @@ import type { PickedFile } from '@/lib/platform/picked-file';
 import { adminKeys, useRefreshContent } from '../shared/keys';
 import {
   attachSection,
-  createCourse,
+  clearCourseImage,
+  createCourseWithCover,
   createSectionInCourse,
   deleteCourse,
   detachSection,
@@ -25,9 +26,14 @@ export function useCourseRecord(courseId: string) {
   });
 }
 
+/** Creates a course, with the cover picture chosen on the same page when there is one. */
 export function useCreateCourse() {
   const refresh = useRefreshContent();
-  return useMutation({ mutationFn: createCourse, onSuccess: refresh });
+  return useMutation({
+    mutationFn: ({ values, cover }: { values: CourseFormValues; cover: PickedFile | null }) =>
+      createCourseWithCover(values, cover),
+    onSuccess: refresh,
+  });
 }
 
 export function useUpdateCourse(courseId: string) {
@@ -50,6 +56,18 @@ export function useReplaceCourseImage(
   return useMutation({
     mutationFn: async (file: PickedFile) => {
       if (course) await replaceCourseImage(course, file);
+    },
+    onSuccess: refresh,
+  });
+}
+
+export function useClearCourseImage(
+  course: Pick<CourseRecord, 'id' | 'thumbnail_path'> | undefined,
+) {
+  const refresh = useRefreshContent();
+  return useMutation({
+    mutationFn: async () => {
+      if (course) await clearCourseImage(course);
     },
     onSuccess: refresh,
   });

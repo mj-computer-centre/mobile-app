@@ -1,23 +1,26 @@
 import { StyleSheet, View } from 'react-native';
 
-import { radius, spacing, useTheme, type ThemeColors } from '../theme';
+import { radius, spacing, useTheme } from '../theme';
 import { AppText } from './app-text';
+import { Icon, type IconName } from './icon';
+import { toneColors, type Tone } from './icon-chip';
 
-type Tone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger';
-
-const tones: Record<Tone, { bg: keyof ThemeColors; fg: keyof ThemeColors }> = {
-  neutral: { bg: 'surfaceMuted', fg: 'textMuted' },
-  primary: { bg: 'primarySoft', fg: 'primary' },
-  success: { bg: 'successSoft', fg: 'success' },
-  warning: { bg: 'warningSoft', fg: 'warning' },
-  danger: { bg: 'dangerSoft', fg: 'danger' },
-};
-
-export function Badge({ label, tone = 'neutral' }: { label: string; tone?: Tone }) {
+/** A short status word: "Live", "Draft", "Late". */
+export function Badge({
+  label,
+  tone = 'neutral',
+  icon,
+}: {
+  label: string;
+  tone?: Tone;
+  icon?: IconName;
+}) {
   const { colors } = useTheme();
+  const { bg, fg } = toneColors[tone];
   return (
-    <View style={[styles.badge, { backgroundColor: colors[tones[tone].bg] }]}>
-      <AppText variant="caption" color={tones[tone].fg} style={styles.text}>
+    <View style={[styles.badge, { backgroundColor: colors[bg] }]}>
+      {icon ? <Icon name={icon} size={13} color={fg} /> : null}
+      <AppText variant="tag" color={fg} numberOfLines={1} style={styles.text}>
         {label}
       </AppText>
     </View>
@@ -27,9 +30,12 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: Tone 
 const styles = StyleSheet.create({
   badge: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
+    paddingVertical: 3,
+    borderRadius: radius.sm,
   },
-  text: { fontWeight: '600' },
+  text: { includeFontPadding: false },
 });

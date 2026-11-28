@@ -47,6 +47,7 @@ export function useAccess(): Access {
     staleTime: 5 * 60_000,
   });
 
+  if (devBypass?.role === 'visitor') return { status: 'signed-out' };
   if (devBypass) return { status: 'ready', userId: DEV_USER_ID, role: devBypassStaffRole() };
   if (isRestoring) return { status: 'loading' };
   if (!userId) return { status: 'signed-out' };
@@ -56,6 +57,11 @@ export function useAccess(): Access {
     return facts.isError ? { status: 'ready', userId, role: null } : { status: 'loading' };
   if (!facts.data.profileCompleted) return { status: 'needs-profile', userId };
   return { status: 'ready', userId, role: facts.data.role };
+}
+
+/** True once the person is signed in and through the profile form: the app, not the website. */
+export function useIsSignedIn(): boolean {
+  return useAccess().status === 'ready';
 }
 
 /** The current person's staff role, or null for students. */

@@ -63,6 +63,9 @@ export interface DashboardStats {
   coursesPublished: number;
   coursesTotal: number;
   lessonsTotal: number;
+  testsPublished: number;
+  testsTotal: number;
+  attemptsTotal: number;
 }
 
 export async function fetchDashboardStats(): Promise<DashboardStats> {
@@ -74,5 +77,8 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     coursesPublished: row?.courses_published ?? 0,
     coursesTotal: row?.courses_total ?? 0,
     lessonsTotal: row?.lessons_total ?? 0,
+    testsPublished: row?.tests_published ?? 0,
+    testsTotal: row?.tests_total ?? 0,
+    attemptsTotal: row?.attempts_total ?? 0,
   };
 }

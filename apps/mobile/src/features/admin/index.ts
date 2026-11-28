@@ -9,6 +9,11 @@ export { StudentsScreen } from './people/students-screen';
 export { StaffScreen } from './people/staff-screen';
 export { BannersScreen } from './home-content/banners-screen';
 export { SettingsScreen } from './home-content/settings-screen';
+export { NewTestScreen } from './tests/new-test-screen';
+export { TestAttemptScreen } from './tests/test-attempt-screen';
+export { TestEditorScreen } from './tests/test-editor-screen';
+export { TestResultsScreen } from './tests/test-results-screen';
+export { TestsAdminScreen } from './tests/tests-admin-screen';
 
 // Query keys and data shapes, for code that fills the cache (dev-bypass demo data).
 export { adminKeys } from './shared/keys';

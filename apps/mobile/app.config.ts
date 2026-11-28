@@ -8,6 +8,11 @@ const isDevelopmentBuild = process.env.APP_VARIANT === 'development';
 // It can never change once the app is published.
 const ANDROID_PACKAGE = 'in.mjcccomputercentre.app';
 
+// The brand's ink blue (src/ui/theme.ts, `hero`): behind the icon, the splash screen and the
+// browser's toolbar. The icon and splash pictures in assets/images are the design system's
+// M key on this colour; replace them when the centre has its own logo (backlog OPS-07).
+const BRAND_INK = '#121640';
+
 // The dev auth bypass (src/lib/dev-bypass.ts) is ignored outside development bundles anyway;
 // this makes a release build with it configured fail loudly instead of shipping the setting.
 if (process.env.NODE_ENV === 'production' && process.env.EXPO_PUBLIC_DEV_AUTH_BYPASS) {
@@ -26,14 +31,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   scheme: 'mishracc',
   userInterfaceStyle: 'automatic',
   ios: {
-    icon: './assets/expo.icon',
     bundleIdentifier: isDevelopmentBuild ? `${ANDROID_PACKAGE}.dev` : ANDROID_PACKAGE,
     supportsTablet: false,
   },
   android: {
     package: isDevelopmentBuild ? `${ANDROID_PACKAGE}.dev` : ANDROID_PACKAGE,
     adaptiveIcon: {
-      backgroundColor: '#E6F4FE',
+      backgroundColor: BRAND_INK,
       foregroundImage: './assets/images/android-icon-foreground.png',
       backgroundImage: './assets/images/android-icon-background.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
@@ -49,20 +53,25 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
   },
   web: {
-    // The admin website is a single-page app: everything is behind sign-in, so there is
-    // nothing to pre-render, and the static host only needs to serve index.html.
+    // The website (public pages, the student app and the admin panel) is a single-page app:
+    // the static host serves index.html for every address (public/index.html, vercel.json).
+    // Each page sets its own title and description when it opens (src/lib/page-title.tsx).
     output: 'single',
     favicon: './assets/images/favicon.png',
-    name: 'Mishra Computer Centre — Admin',
+    name: 'Mishra Computer Centre',
+    description:
+      'Computer courses from Mishra Computer Centre, Makhdumpur, Jehanabad: video lessons, PDF notes and timed tests.',
+    themeColor: BRAND_INK,
+    lang: 'en',
   },
   plugins: [
     'expo-router',
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#1F5FAE',
+        backgroundColor: BRAND_INK,
         image: './assets/images/splash-icon.png',
-        imageWidth: 76,
+        imageWidth: 96,
       },
     ],
     [
@@ -89,6 +98,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     reactCompiler: true,
   },
   extra: {
-    eas: { projectId: process.env.EAS_PROJECT_ID || "3cf62934-c973-4a1e-a41b-67e717b8364b" },
+    eas: { projectId: process.env.EAS_PROJECT_ID || '3cf62934-c973-4a1e-a41b-67e717b8364b' },
   },
 });
