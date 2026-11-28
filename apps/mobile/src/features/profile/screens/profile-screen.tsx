@@ -13,10 +13,10 @@ import {
   Avatar,
   Badge,
   Button,
-  ErrorState,
   IconChip,
   ListGroup,
   ListRow,
+  Notice,
   Screen,
   Sheet,
   SkeletonRows,
@@ -42,11 +42,11 @@ export function ProfileScreen() {
       </Screen>
     );
   }
-  if (profile.isError)
-    return <ErrorState error={profile.error} onRetry={() => void profile.refetch()} />;
-  const me = profile.data;
-  const name = me.full_name || me.email || 'Your profile';
-  const interest = courses.data?.find((course) => course.id === me.interested_course_id)?.title;
+  // When the details cannot be loaded the rest of the page stays: signing out must never
+  // depend on them.
+  const me = profile.isError ? null : profile.data;
+  const name = me?.full_name || me?.email || 'Your profile';
+  const interest = courses.data?.find((course) => course.id === me?.interested_course_id)?.title;
   const playStoreUrl = settings.data?.play_store_url;
 
   const confirmDelete = async () => {
@@ -65,46 +65,67 @@ export function ProfileScreen() {
 
   return (
     <Screen edges={[]}>
-      <View style={styles.header}>
-        <Avatar name={name} size={64} />
-        <View style={styles.headerText}>
-          <AppText variant="title" accessibilityRole="header" numberOfLines={2}>
-            {name}
-          </AppText>
-          {me.email && me.full_name ? (
-            <AppText color="textMuted" numberOfLines={1}>
-              {me.email}
+      {me ? null : (
+        <Notice
+          tone="danger"
+          title="Your details could not be loaded"
+          action={
+            <Button
+              label="Try again"
+              icon="refresh"
+              variant="secondary"
+              compact
+              loading={profile.isRefetching}
+              onPress={() => void profile.refetch()}
+            />
+          }>
+          {toAppError(profile.error).message}
+        </Notice>
+      )}
+      {me ? (
+        <View style={styles.header}>
+          <Avatar name={name} size={64} />
+          <View style={styles.headerText}>
+            <AppText variant="title" accessibilityRole="header" numberOfLines={2}>
+              {name}
             </AppText>
-          ) : null}
-          {role ? <Badge label={role === 'owner' ? 'Owner' : 'Admin'} tone="primary" /> : null}
+            {me.email && me.full_name ? (
+              <AppText color="textMuted" numberOfLines={1}>
+                {me.email}
+              </AppText>
+            ) : null}
+            {role ? <Badge label={role === 'owner' ? 'Owner' : 'Admin'} tone="primary" /> : null}
+          </View>
         </View>
-      </View>
+      ) : null}
 
-      <View style={styles.section}>
-        <ListGroup>
-          <ListRow
-            title="Mobile"
-            subtitle={me.phone ? formatIndianMobile(me.phone) : 'Not added'}
-            leading={<IconChip name="phone-outline" tone="neutral" />}
+      {me ? (
+        <View style={styles.section}>
+          <ListGroup>
+            <ListRow
+              title="Mobile"
+              subtitle={me.phone ? formatIndianMobile(me.phone) : 'Not added'}
+              leading={<IconChip name="phone-outline" tone="neutral" />}
+            />
+            <ListRow
+              title="Village or town"
+              subtitle={me.city ?? 'Not added'}
+              leading={<IconChip name="map-marker-outline" tone="neutral" />}
+            />
+            <ListRow
+              title="Course you are interested in"
+              subtitle={interest ?? 'Not chosen'}
+              leading={<IconChip name="school-outline" tone="neutral" />}
+            />
+          </ListGroup>
+          <Button
+            label="Edit details"
+            icon="pencil"
+            variant="secondary"
+            onPress={() => setEditing(true)}
           />
-          <ListRow
-            title="Village or town"
-            subtitle={me.city ?? 'Not added'}
-            leading={<IconChip name="map-marker-outline" tone="neutral" />}
-          />
-          <ListRow
-            title="Course you are interested in"
-            subtitle={interest ?? 'Not chosen'}
-            leading={<IconChip name="school-outline" tone="neutral" />}
-          />
-        </ListGroup>
-        <Button
-          label="Edit details"
-          icon="pencil"
-          variant="secondary"
-          onPress={() => setEditing(true)}
-        />
-      </View>
+        </View>
+      ) : null}
 
       <ListGroup>
         <ListRow
@@ -151,20 +172,22 @@ export function ProfileScreen() {
         />
       </View>
 
-      <Sheet visible={editing} onClose={() => setEditing(false)} title="Your details" tall>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.form}>
-          <ProfileForm
-            submitLabel="Save"
-            onSaved={() => setEditing(false)}
-            initialValues={{
-              fullName: me.full_name ?? '',
-              phone: me.phone ?? '',
-              city: me.city ?? '',
-              interestedCourseId: me.interested_course_id ?? '',
-            }}
-          />
-        </ScrollView>
-      </Sheet>
+      {me ? (
+        <Sheet visible={editing} onClose={() => setEditing(false)} title="Your details" tall>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.form}>
+            <ProfileForm
+              submitLabel="Save"
+              onSaved={() => setEditing(false)}
+              initialValues={{
+                fullName: me.full_name ?? '',
+                phone: me.phone ?? '',
+                city: me.city ?? '',
+                interestedCourseId: me.interested_course_id ?? '',
+              }}
+            />
+          </ScrollView>
+        </Sheet>
+      ) : null}
     </Screen>
   );
 }

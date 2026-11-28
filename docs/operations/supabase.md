@@ -121,6 +121,12 @@ select private.bootstrap_owner('centre@gmail.com');
 
 From then on the owner adds staff in Admin → Staff.
 
+An account that signed in **before** the migrations were pushed has no profile row (the trigger that creates one did not exist yet): its Profile page shows an error and the staff list shows it without a name. The `…_profile_backfill` migration creates the missing rows, and so does this, any time:
+
+```sql
+select private.backfill_profiles();
+```
+
 ## 7. App configuration
 
 `apps/mobile/.env.local` (development) and EAS environment variables (builds): see `apps/mobile/.env.example`. Only public `EXPO_PUBLIC_*` values go there; the keys in sections 3 and 4 never do.
